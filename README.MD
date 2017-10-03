@@ -14,7 +14,14 @@ Informações acerca do material
 
 O material foi escrito utilizando-se o framework [Sphinx](http://www.sphinx-doc.org/en/stable/), que promove a utilização da linguagem de marcação [ReST](https://en.wikipedia.org/wiki/ReStructuredText) para a criação do conteúdo.
 
-Todos os conteúdos encontram-se em "docker-unleashed". Para a geração do material (recomenda-se o formato HTML, mas outros são suportados conforme documentação do Sphinx) é necessário:
+A última versão do material é gerada e automaticamente disponiilizada em:
+
+http://docker-unleashed.readthedocs.io/intro.html
+
+Construção do Material
+----------------------
+
+Todos os conteúdos encontram-se em "docker-unleashed". Caso deseje realizar a construção do material (recomenda-se o formato HTML, mas outros são suportados conforme documentação do Sphinx) será necessário:
 
 1. A linguagem Python instalada no Sistema Operacional;
 2. As bibliotecas listadas no arquivos `requirements.txt`;
