@@ -1,0 +1,4 @@
+.~lock*
+*.pyc
+docs/_build/*
+docker-unleashed/_build/*

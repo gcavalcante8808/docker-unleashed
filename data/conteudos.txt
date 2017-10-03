@@ -1,0 +1,5 @@
+http://rancher.com/comparing-monitoring-options-for-docker-deployments/
+https://medium.com/@ewindisch/on-the-security-of-containers-2c60ffe25a9e
+https://medium.com/@ewindisch/linux-user-namespaces-might-not-be-secure-enough-a-k-a-subverting-posix-capabilities-f1c4ae19cad#.n0lhv9i69
+https://blog.docker.com/2015/10/docker-basics-webinar-qa/
+http://boynux.com/docker-consolidate-logs-logstash/

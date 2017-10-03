@@ -1,0 +1,20 @@
+version: '2'
+volumes:
+    data:
+    
+services:
+    db:
+      image: gcavalcante8808/zabbix-db-postgres
+      restart: always
+      networks:
+       - databases
+      environment:
+        POSTGRES_DB: zabbix
+        POSTGRES_USER: zabbix
+        POSTGRES_PASSWORD: "zabbix"
+      volumes:
+        - data:/var/lib/postgresql/data
+        
+networks:
+    databases:
+        driver: bridge

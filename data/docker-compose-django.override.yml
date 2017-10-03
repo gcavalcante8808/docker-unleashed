@@ -1,0 +1,11 @@
+version: '2'
+
+volumes:
+    pgdata:
+        driver: netapp
+    
+services:
+    db:
+        image: postgres
+        volumes:
+         - pgdata:/var/lib/postgresql/data

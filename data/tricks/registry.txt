@@ -1,0 +1,7 @@
+Listar as imagens suportadas:
+
+curl localhost:5000/v2/_catalog
+
+Usar registry como serviço e apontar tudo para localhost:5000 para não precisar de tls ...
+
+https://lostechies.com/gabrielschenker/2016/10/05/docker-and-swarm-mode-part-3/ -> Logs

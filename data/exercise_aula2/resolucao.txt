@@ -1,0 +1,3 @@
+docker run -d --name workshop-redis --network=samples_default --restart=always redis
+docker run -d --name workshop-db --restart=always -v /data/pgsql:/var/lib/postgresql/data -e POSTGRES_USER=workshop -e POSTGRES_PASSWORD=workshop123 -e POSTGRES_DB=workshop --network=samples_default postgres:9.6
+

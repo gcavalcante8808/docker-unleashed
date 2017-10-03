@@ -1,0 +1,24 @@
+[inet_http_server]
+port=9001
+
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+[supervisorctl]
+serverurl = http://127.0.0.1:9001
+
+[program:bacula-dir]
+command=/usr/sbin/bacula-dir -f -c /etc/bacula/bacula-dir.conf
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+
+[program:baculd-fd]
+command=/usr/sbin/bacula-fd -f -c /etc/bacula/bacula-fd.conf
+
+[supervisord]
+logfile = /tmp/supervisord.log
+loglevel = critical
+nodaemon = true
+user = root
+pidfile = /tmp/supervisord.pid
+directory = /tmp

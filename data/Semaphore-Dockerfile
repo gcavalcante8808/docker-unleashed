@@ -1,0 +1,17 @@
+FROM gcavalcante8808/ansible
+
+USER root
+ARG SEMAPHORE_VERSION=2.0.4
+ADD https://github.com/ansible-semaphore/semaphore/releases/download/v${SEMAPHORE_VERSION}/semaphore_linux_amd64 /usr/bin/semaphore
+RUN chmod +x /usr/bin/semaphore && \
+    mkdir /tmp/semaphore && \
+    chown webserver:webserver /tmp/semaphore
+
+COPY ./semaphore.sh /docker-entrypoint-initdb.d/
+USER webserver
+
+ENV GIN_MODE release
+WORKDIR /home/webserver
+EXPOSE 3000
+ENTRYPOINT ["/docker-entrypoint-initdb.d/semaphore.sh"]
+
