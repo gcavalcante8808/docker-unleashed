@@ -1,6 +1,8 @@
 Curso Docker Unleashed
 ----------------------
 
+Status do Projeto: [![Documentation Status](https://readthedocs.org/projects/docker-unleashed/badge/?version=latest)](http://docker-unleashed.readthedocs.io/?badge=latest)
+
 Este material encontra-se disponível sob a licença cc-by-sa-4.0(https://choosealicense.com/licenses/cc-by-sa-4.0/)e inicialmente foi pensado como apoio para um formato presencial de curso.
 
 Conforme licença, seu uso é permitido para distribuição, modificação, uso privado e comercial, sem garantias de uso de nome, patentes ou funcionamento/aplicabilidade. 
