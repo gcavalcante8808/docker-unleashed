@@ -10,10 +10,10 @@ Cenário e Atividades
 Para aplicar os demais conhecimentos nas demais aulas, será necessário criar uma imagem da aplicação 'curso', cujos detalhes são os seguintes:
 
 1. A aplicação é feita em Python;
-3. O projeto possui um arquivo `requirements.txt` que contém as bibliotecas python que devem ser instaladas através do PIP, cuja instalação pode ser realizada da diretiva `RUN pip install -r requirements.txt`;
-4. Objetivando um uso inicial em desenvolvimento, apenas utilizaremos um servidor Werkzeug mais simples para servir as páginas do projeto. Para isso, o flask requer que **variável de ambiente** `FLASK_APP` esteja definida com o nome do módulo da aplicação, nesse caso `app.py`, que pode ser expresso no Dockerfile através da diretiva `ENV FLASK_APP=app.py`;
-5. O comando a ser utilizado para este contêiner é `flask run` que deve ser realizado a partir da pasta da aplicação;
-6. Crie o módulo `app.py` com o código abaixo, salve-o e copie-o para a imagem (Diretiva `COPY`):
+2. O projeto possui um arquivo `requirements.txt` que contém as bibliotecas python que devem ser instaladas através do PIP, cuja instalação pode ser realizada da diretiva `RUN pip install -r requirements.txt`;
+3. Objetivando um uso inicial em desenvolvimento, apenas utilizaremos um servidor Werkzeug mais simples para servir as páginas do projeto. Para isso, o flask requer que **variável de ambiente** `FLASK_APP` esteja definida com o nome do módulo da aplicação, nesse caso `app.py`, que pode ser expresso no Dockerfile através da diretiva `ENV FLASK_APP=app.py`;
+4. O comando a ser utilizado para este contêiner é `flask run` que deve ser realizado a partir da pasta da aplicação;
+5. Crie o módulo `app.py` com o código abaixo, salve-o e copie-o para a imagem (Diretiva `COPY`):
 
 .. code-block:: python
 
@@ -24,8 +24,8 @@ Para aplicar os demais conhecimentos nas demais aulas, será necessário criar u
     def hello():
         return "Hello World!"
 
-7. Realiza a criação da imagem com o nome **oficina-docker** a etiqueta **aula-1** através do comando `docker build -t oficina-docker:imagem-aula-1 .`;
-8. Crie um contêiner com o nome **aula-1** a partir da imagem com um vínculo da porta 5000 do host para a porta 5000 do contêiner para facilitar a visualização através do um browser, através do comando `docker run -d --name aula-1 -p 5000:5000 oficina-docker:imagem-aula-1`.
+6. Realiza a criação da imagem com o nome **oficina-docker** a etiqueta **aula-1** através do comando `docker build -t oficina-docker:imagem-aula-1 .`;
+7. Crie um contêiner com o nome **aula-1** a partir da imagem com um vínculo da porta 5000 do host para a porta 5000 do contêiner para facilitar a visualização através do um browser, através do comando `docker run -d --name aula-1 -p 5000:5000 oficina-docker:imagem-aula-1`.
 
 Informações adicionais
 ######################
