@@ -24,8 +24,8 @@ Para aplicar os demais conhecimentos nas demais aulas, será necessário criar u
     def hello():
         return "Hello World!"
 
-7. Realiza a criação da imagem com a etiqueta *imagem-aula-1* através do comando `docker build -t imagem-aula-1 .`;
-8. Crie um contêiner com o nome **aula-1** a partir da imagem com um vínculo da porta 5000 do host para a porta 5000 do contêiner para facilitar a visualização através do um browser, através do comando `docker run -d --name aula-1 -p 5000:5000 imagem-aula-1`.
+7. Realiza a criação da imagem com o nome **oficina-docker** a etiqueta **aula-1** através do comando `docker build -t oficina-docker:imagem-aula-1 .`;
+8. Crie um contêiner com o nome **aula-1** a partir da imagem com um vínculo da porta 5000 do host para a porta 5000 do contêiner para facilitar a visualização através do um browser, através do comando `docker run -d --name aula-1 -p 5000:5000 oficina-docker:imagem-aula-1`.
 
 Informações adicionais
 ######################
@@ -69,4 +69,4 @@ Após a realização das atividades, salve o resultado do trabalho no github, at
     # Enviar as mudanças para o reposítório remoto.
     git remote add https://github.com/<USUARIO>/docker-unleashed
     git push -u origin master aula1
-    ```
+
