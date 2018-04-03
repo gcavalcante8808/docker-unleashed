@@ -2,9 +2,9 @@
 
 .. toctree::
 
-======================================
-Aula 1: Docker - Imagens e Contêineres
-======================================
+============================================
+Aula 1: Docker e Microsserviços - Introdução
+============================================
 
 O que é o docker?
 -----------------
@@ -25,7 +25,7 @@ O que são Microsserviços?
 -------------------------
 
 Uma arquitetura de microsserviços consiste numa abordagem que enfoca o desenvolvimento e manutenção de softwares em pequenas partes, ou microsserviços, em que cada processo funciona em um contêiner distinto e se comunica através de protocolos simples, como o HTTP.
-  
+
 Microsserviços são um contraponto direto da distribuição de pilhas de aplicação, como pode ser visto no exemplo abaixo:
 
 .. image:: ../data/microservices.png
@@ -152,7 +152,7 @@ Outra característica digna de nota é que, uma vez que uma imagem é criada, es
 Adquirindo Novas Imagens
 ------------------------
 
-Atualmente, o docker conta com um repositório comunitário que é o **docker.hub.com**: o repositório contém imagens consideradas base (que possuem apenas o sistema operacional, utilizadas como ponto de partida para criação das imagens de aplicação), imagens oficiais das aplicações mais conhecidas (mysql, postgres, redis, etc) e imagens que são contribuições da própria comunidade.
+Atualmente, o docker conta com um repositório comunitário que é o **hub.docker.com**: o repositório contém imagens consideradas base (que possuem apenas o sistema operacional, utilizadas como ponto de partida para criação das imagens de aplicação), imagens oficiais das aplicações mais conhecidas (mysql, postgres, redis, etc) e imagens que são contribuições da própria comunidade.
 
 Quando se deseja iniciar um novo contêiner precisamos, primeiramente, receber ou construir a imagem. Para saber quais imagens já estão disponíveis em um host, pode-se utilizar o seguinte comando:
 
@@ -187,7 +187,7 @@ Para realizar o recebimento de uma nova imagem, neste caso hospedada no site hub
 
     O comando **docker pull** assume que a imagem será salva a partir do hub.docker.com, porém é possível ter os próprios repositórios de imagem. Mais informações acerca
     do capítulo sobre o "Registry".
-    
+
 
 Contêineres
 -----------
@@ -297,7 +297,7 @@ Criação de Imagens
 
 Para então dar prosseguimento a criação de um novo microsserviço, deve-se criar primeiramente um DockerFile, que nada mais é do que a receita para construção de uma imagem. É possível ainda gerar uma nova imagem a partir de um contêiner em funcionamento (sem um Dockerfile) transformando-o em uma imagem.
 
-Para ilustrar o uso de um DockerFile, faremos a criação do arquivo e a construção da imagem a partir deste (a imagem será utilizada nas aulas posteriores); para tanto, execute os seguinte passos:
+Para ilustrar o uso de um DockerFile, faremos a criação do arquivo e a construção da imagem a partir deste; para tanto, execute os seguinte passos:
 
  1. abra o prompt de comandos;
  2. crie uma pasta chamada "stress";
@@ -310,7 +310,7 @@ Para ilustrar o uso de um DockerFile, faremos a criação do arquivo e a constru
 5. Salve e feche o arquivo;
 6. Execute o comando "docker build -t stress ."
 
-A diretiva final "docker build -t stress ." indica ao docker que uma imagem será construída a partir do diretório local, será nomeada como "stress" (o que facilitará seu reconhecimento posterior), sendo que automaticamente o docker seleciona o arquivo Dockerfile no diretório atual
+A diretiva final "docker build -t stress ." indica ao docker que uma imagem será construída a partir do diretório local, será etiquetada como "stress" (o que facilitará seu reconhecimento posterior), sendo que automaticamente o docker seleciona o arquivo Dockerfile no diretório atual
 
 Para visualizar a imagem, execute novamente o seguinte comando:
 
@@ -447,133 +447,6 @@ CMD ["-lha"]
 
 No caso acima, o entrypoint seria o comando `ls` e o CMD passaria o `-lha` como parâmetro para o entrypoint. Os casos mais comuns para utilização desse tipo é quando um determinado binário possui mais de uma função ou subcomando. Alguns exemplos:
 
-#### Gerenciamento de uma aplicação escrita em Python/Django
-
-Comumente utiliza-se o comando `python manage.py <TASK>` para a realização de tarefas administrativas de uma aplicação django, como nos comandos:
-
-```
-python manage.py runserver
-python manage.py createsuperuser
-python manage.py migrate
-```
-
-Considerando a utilização da diretiva `CMD ["python","manage.py","runserver"]` dentro do Dockerfile, posteriomente quando se desejasse executar os outros dois comandos, seria necessário usar a seguinte sintaxe:
-
-```
-docker exec <CONTAINER> python manage.py createsuper
-docker exec <CONTAINER> python manage.py migrate
-```
-
-No entanto, se definissemos que o valor `ENTRYPOINT ["python","manage.py"]` e `CMD ["runserver"]`, posteriormente poderíamos executar os demais comandos de forma simples:
-
-```
-docker exec <CONTAINER> createsuper
-docker exec <CONTAINER> migrate
-```
-
-Isso por que "createsuperuser" e "migrate" se tornariam parâmetros.
-
-Adicionalmente, quando da utilização de um ENTRYPOINT em conjunto com um CMD, ainda é possível fazer a criação do contêiner com um entrypoint diferente do definido através do seguinte comando:
-
-```
-docker run --entrypoint bash <IMAGEM>
-```
- 
-Sistema de Arquivos dos Contêiners 
-----------------------------------
-
-Os sistemas de arquivos utilizados pelos contêiners são, comumente, reflexos do sistema de arquivos do host organizado por uma tecnologia de **UnionFS** e que suporta o conceito de **COW - Copy On Write**, organizando o sistema de arquivos em várias camadas com diferentes versões de arquivos e se apresentando de forma consolidada ao contêiner. 
-
-No caso das imagens, cada diretiva utilizada no momento de sua construção resulta em uma camada adicional no sistema de arquivos; isso permite que diferentes imagens que reutilizem os dados de diretiva em comum além de**compartilhar as camadas existentes e evitar o uso adicional/intensivo de disco**, conforme ilustrado na imagem abaixo:
-
-.. image:: ../data/container-layers.jpg
-
-Assim, as camadas relativas à imagem permanecem inalteradas ao passo que o uma camada relativa a um contêiner são plenamente alteráveis; no entanto, o conjunto excessivo de operações de escrita na camada relativa a um contêiner devem ser evitadas pois incorrem em diferentes níveis de perda de *throughput* a depender do *storage driver* utilizado. Maiores Inofrmações no capítulo "Storage Drivers" da Aula 4.
-
-.. warning::
-
-    Todos os arquivos editados e/ou salvos no sistema de arquivos de um contêiner são removidos (perdidos) quando da remoção do mesmo.
-
-Volumes
--------
-
-Ao contrário do sistema de arquivos do contêiner, que são removidos quando da exclusão do mesmo, os **volumes** são áreas de dados **persistentes**, normalmente diretórios do sistema de arquivos do *host* ou de um *storage* disponibilizados  para um contêiner algo análogo a montagem de volumes que ocorre nos sistemas operacionais Posix. Ao contrário dos sistemas de arquivos dos contêineres, volumes **não sofrem** *overheads* de escrita e também não são perdidos (a menos que se utilize o parâmetro -v na remoção do contêiner) com a exclusão/criação de contêineres.
-
-Para realizar a montagem de um volume que se reflita em uma pasta do sistemas de arquivo local em um contêiner, pode-se utilizar o parâmetro "-v /diretorio:/pontodemontagem", como no exemplo abaixo:
-
-.. code-block:: bash
-
-    # docker run -d -v /data:/tmp/data httpd
-
-No exemplo acima a pasta "/diretorio" será *montada* dentro do endereço "/pontodemontagem" do contêiner.
-
-.. note::
-    
-    Caso a pasta a ser montada no contêiner não existe a mesma será criada no sistemas de arquivos. 
-    
-
-Adicionalmente também é possível realizar a montagem em modo somente-leitura adicionando a diretiva ":ro" ao final da declaração:
-
-.. code-block:: bash
-
-    # docker run -d -v /data:/tmp/data:ro httpd
-    
-Para os casos em que um mesmo volume precisa ser reutilizado, pode-se criar um contêiner de dados, para então reutilizá-lo nos demais contêineres:
-
-.. code-block:: bash
-
-    # docker run -d --name data-container -v /data:/tmp/data ubuntu bash
-    # docker run -d --name app1 --volumes-from data-container myapp-image
-    # docker run -d --name app2 --volumes-from data-container myapp-image
-
-.. note::
-    
-    Note que o contêiner de dados não precisará estar iniciado para que as configurações de montagem sejam reaproveitadas pelos demais contêineres. 
-    
-.. note::
-
-    Uma possível exclusão do contêiner de dados não causa impactos a contêineres já criados que tenham feito a utilização das configurações do volume; no entanto, novos contêineres não poderão
-    fazer a importação da configuração de volume a partir do mesmo uma vez que este foi excluído.
-    
-Há ainda diversos plugins que permitem usar diferentes sistemas de arquivos que não o local como volumes. Mais informações no capítulo "Escalabilidade & Monitoramento: Storage Plugins".
-    
-Named Volumes
-^^^^^^^^^^^^^
-
-Além da montagem de volumes do sistema de arquivos para um contêiner, é possível ainda fazer a criação e montagem de um *named volume*, que é um volume inicializado durante a criação do contêiner e gerenciado pelo próprio Docker.
-
-Um *named volume* é normalmente utilizado nas seguintes situações:
-
- 1. Quando da utilização de plugins do docker para suporte a volumes (NetApp, Convoy, etc);
- 2. Padronização dos volumes no ambiente.
- 
-A criação de um *named volume* normalmente ocorre através do seguinte comando:
-
-.. code-block:: bash
-    
-    # docker volume create --driver local --name volume1
-
-Após a criação de um volume, a lista com todos os volumes pode ser visualizada através do seguinte comando:
-
-.. code-block:: bash
-
-    # docker volume ls
-
-A utilização do volume por um contêiner possui sintaxe parecida com a montagem de volumes do sistema de arquivos, conforme pode ser visualizado abaixo:
-
-.. code-block:: bash
-
-    # docker run -d postgres-default -v volume1:/var/lib/postgresql/data
-
-A remoção de um *named volume* pode ser realizada através do seguinte comando:
-
-.. code-block:: bash
-
-    # docker volume rm volume1
-    
-.. note::
-
-    A remoção de um volume só poderá se dar quando da não utilização do mesmo por um contêiner.
 
 
 Dicas para criação de imagens
@@ -634,60 +507,6 @@ Jamais instale o SystemD padrão nas imagens base
    As imagens base contém a versão cloud do systemd, muito menor que o systemd original, sendo que estas são mutuamente exclusivas.
 
 
-Procure evitar o uso de Volumes para guardar arquivos proeminentemente estáticos
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    Volumes servem ao propósito de servir arquivos que são constantemente atualizados sem o **overhead** do **UnionFS**; caso seja necessário fazer mudanças específicas em arquivos de configuração, como incluir um IP específico em um arquivo de configuração, procure utilizar as diretivas ENV e/ou um script de configuração do contêiner através do ENTRYPOINT.
-
-
-Supervisord: mais de um processo por contêiner
-----------------------------------------------
-
-Há casos tão específicos de encapsulamento de uma aplicação que, muitas vezes, é necessário servir mais de um processo dentro de uma mesma imagem. Casos como o **Gitlab** que possui portas de acesso tanto SSH(22) quanto HTTP/S(80 e 443) requerem que tanto o servidor Web quanto o servidor SSH estejam ativos num mesmo contêiner; para esses casos é necessário utilizar um gerenciador de processos, como o **Supervisor**. 
-
-Para utilizar o Supervisord em uma imagem são necessários 2 passos:
-
- * Instalar o supervisord de forma própriamente dita;
- * Criar um arquivo de configuração com informações de quais serviços o *supervisor* irá iniciar.
-
-Para instalar o supervisord em uma imagem utilize as seguintes diretivas:
-
-.. code-block:: bash
-
-    RUN curl https://bootstrap.pypa.io/get-pip.py | python && \
-    pip install supervisor
-
-
-Note que para o perfeito funcionamento do comando é necessário que a imagem possua a linguagem **python** instalada previamente. Caso seja necessário o suporte a linguagem, pode-se fazer a instalação conforme exemplo abaixo(Debian):
-
-.. code-block:: bash
-
-    RUN apt-get update && \
-        apt-get install curl python-minimal -y && \
-        rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-        curl https://bootstrap.pypa.io/get-pip.py | python && \
-        pip install supervisor
-    ADD supervisord.conf /etc/supervisord.conf
-
-Após instalar o supervisor é necessário criar o arquivo "supervisord.conf", que por padrão é lido de "/etc". O exemplo abaixo ilustra algumas das configurações presentes no arquivo:
-
-.. literalinclude:: ../data/Bacula-supervisord
-
-Dentre as seções presentes no arquivo, é possível destacar:
-
- * 'inet_http_server': O próprio supervisord possui uma API XmlRpc que pode ser utilizada para introspectar informações e gerenciar os serviços iniciados; não obstante, esta configuração faz com que só seja possível conectar-se a API a partir do próprio contêiner;
- 
- * 'supervisorctl': **supervisorctl** é o utilitário de linha de comando análogo ao "service" e "systemctl" dos sistemas operacionais; com ele pode-se iniciar, parar, reiniciar ou descobrir o estado dos serviços em funcionamento;
- 
- * 'program': é a declaração do serviço a ser executado; perceba que as diretivas "stdout_logfile" e "stdout_logfile_maxbytes=0" são necessárias para que as aplicações passem a mostrar seus logs diretamente na saída do contêiner e assim, podermos utilizar comandos com o *docker log* para visualizar os logs;
- 
- * 'supervisord': configuração do daemon propriamente dita, o parâmetro mais importante é o "nodaemon=true" que mantém o supervisor em *foreground* e evita que o contêiner seja finalizado.
- 
-.. note ::
-
-    Informações e demais opções de configuração do *supervisor* estão disponíveis em: http://supervisord.org/
-    
-
 Ciclo de vida de Contêineres
 ----------------------------
 
@@ -696,5 +515,4 @@ Diferentemente das soluções tradicionais de TI, o ciclo de vida de um contêin
 .. image:: ../data/ciclo_containers.png
 
 Esse é mais dos motivos pelo qual se prega que os contêineres devem refletir a arquitetura de microsserviços: a atualização de cada componente de uma pilha de aplicação torna-se muito mais simples, considerando que cada componente pode ser atualizado em separado; também promulga as boas práticas de evitar **configuration drift** entre os vários contêineres, organizando e padronizando o ambiente de TI.
-
 
