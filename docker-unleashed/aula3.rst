@@ -2,9 +2,10 @@
 
 .. toctree::
 
-*********************************
-Aula 3: Gerenciamento e Segurança
-*********************************
+***************************************************************
+Aula 3: Repositório de Imagens, Conectividade Interna e Logging
+***************************************************************
+
 
 ===============
 Docker Registry
@@ -105,229 +106,206 @@ Por fim, a criação do contêiner do registry pode ser refletida com o seguinte
 
     Mais informações acerca do registry podem ser encontradas em: https://docs.docker.com/registry/configuration/
 
-==================================================
-CGROUPS: Gerenciamento de Recursos dos Containeres
-==================================================
+Rede
+----
 
-É possível direcionar o uso de recursos do ambiente a cada contêiner durante a sua criação ou funcionamento.
+Historicamente, o Docker possui três redes previamente configuradas que podem ser utilizadas por futuros contêineres:
 
-Para tanto, o próprio recurso de CGroups contém descritores para cada tipo de recurso: CPU, Memória, Throughput de Disco e *Rede. O número desses descritores atribui um peso/prioridade para cada contêiner, sendo que por padrão, todos os contêineres dividem os recursos disponíveis igualmente.
-
-A definição da limitação de recursos podem acontecer durante a criação do contêiner, com parâmetros em conjunto com o comando "docker run" ou através após a criação do contêiner (inclusive durante seu funcionamento) utilizando-se o comando "docker update".
-
-.. note ::
-
-    O gerenciamento/escalonamento da pilha de rede de um contêiner não é suportado pelo docker.
-    Informações completas acerca  do docker update disponíveis em: https://docs.docker.com/engine/reference/commandline/update.
-    
-
-CPU
----
-
-O controle de uso de CPU por contêiner pode ocorrer em 3 níveis:
-
- * Afinidade de processos;
- * Peso Relativo;
- * Porcentagem de Uso do Recurso.
+ * "docker0": Rede bridge padrão configurada para utilizar a subrede 172.17.0.0/16;
+ * "none": Para casos em que se deseja que um contêiner não possua suporte a Rede (os contêineres ainda terão o suporte a interface de loopback);
+ * "host": Espelha as mesmas conexões presentes no host para o contêiner.
  
-Para o caso de peso relativo, leva-se em conta que cada contêiner possui até 1024 descritores, o que define o uso mínimo do recurso de CPU. O exemplo abaixo ilustra a criação de um contêiner que possui a pelo menos a 25% da CPU:
+Durante a criação de um contêiner este é automaticamente atrelado a interface "docker0": uma regra de NAT é criada no firewall do host e o contêiner recebe um IP randômico dentro da faixa 172.17.0.0/16 e quaisquer portas expostas (diretiva "EXPOSE" no Dockerfile) são acessíveis na forma IP:PORTA.
 
-.. code-block:: bash
-    
-    # docker run -it --rm --cpu-shares 256 stress --cpu 1
+.. note::
 
-A seguir criamos um contêiner que não possui configuração de uso da CPU, ou seja, sem faixa mínima de uso:
-
-.. code-block:: bash
-    
-    # docker run -it --rm stress --cpu 1
-
-Nesse caso, para um uso proporcional de 10% do sistema operacional, o primeiro contêiner ficaria com uso de algo em torno de 20%, enquanto o segundo utilizaria o restante da CPU.
-
-No caso da definição da afinidade de um contêiner basta indicar as CPU's alvo através do parâmetro "--cpuset-cpus", conforme abaixo:
-
-.. code-block:: bash
-
-    # docker run -it --rm --cpuset-cpus=0,1 stress --cpu 2
-
-Por fim, para definir o uso de recursos de um contêiner, deve-se utilizar o parâmetro "--cpuset-quota":
-
-.. code-block:: bash
-
-    # docker run -it --rm --cpu-quota=50000 stress --cpu 4
-    
-No caso acima, o contêiner estará limitado a utilizar até 50% do total de processamento do sistema; como nesse caso não houve a definição de afinidade o provável comportamento será o aparecimento de 4 processos, com ~13% de uso de cpu cada.
-
-.. note ::
-
-    Demais informações acerca do controle de uso via quota para a CPU disponíveis em: https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt
-    
-Memória
--------
-
-O gerenciamento de uso do recurso de memória para um contêiner pode se dar em três níveis:
-
- * Quantidade de Memória RAM;
- * Quantidade de Uso de Swap;
- * ** Reserva de Memória **.
-
-Para definir a quantidade de memória RAM que um determinado contêiner pode utilizar, adiciona-se o parâmetro "--memory" seguido da quantidade e unidade:
-
-.. code-block:: bash
-
-    # docker run -d --memory=1G --name httpd httpd
-    # docker update --memory=512M httpd
-
-É possível ainda definir o valor de swap que um contêiner pode usar, mas é necessário que seja em conjunto com o valor de memória RAM, conforme exempo abaixo:
-
-    # docker run -d --memory=1G --memory-swap=2G --name httpd httpd
-    # docker update --memory 1G --memory-swap 2G httpd
-
-A **reserva de memória** (que funciona na prática como um **soft limit**) funciona de forma que, quando o ambiente estiver saturado, o docker tentará fazer com que contêiner alvo utilize o valor de memória definido. Vide o exemplo abaixo:
-
-    # docker run -d --memory 1G --memory-swap=2G --memory-reservation 100M --name httpd httpd
-
-É interessante notar que, por padrão, o próprio Docker interromperá o funcionamento de um contêiner caso ele chegue ao topo de uso definido ou utilize toda a memória do sistema. A sintaxe para desabilitar o **oom-killer** para um determinado contêiner é:
-
-.. code-block::  bash
-
-    # docker run -it --rm -m 200M --oom-kill-disable ubuntu:16:04
+    Os Endereços IP recebidos por um contêiner não possuem nenhuma garantia de continuidade; em verdade, os IP's são atribuídos na ordem em que os contêineres são iniciados, começando por 172.17.0.2, sendo que o endereço 172.17.0.1 é o gateway de acesso para a interface 'docker0'.
 
 .. warning::
 
-    É possível desabilitar esse comportamento para um contêiner, porém isso só é recomendável para o caso em que ele possua um limite de RAM; desabilitar o **OOM-KILLER** para um contêiner que não possui um limite definido poderá fazer com que o Administrador do servidor precise matar os processos do host manualmente para liberar memória.
+    É importante frisar que todos os contêineres que forem colocados sob a interface "docker0" terão plena conectividade entre si, mas não haverá suporte a resolução de nomes: apenas através de um **link** entre os contêineres ou em uma nova rede criada esse suporte estará disponível.
 
-Uso de Disco - **Throughput**
------------------------------
+Para se descobrir o Ip de um contêiner pode-se utilizar as seguintes formas:
 
-O gerenciamento de uso do Disco para um contêiner pode se dar em três níveis:
+.. code-block:: bash
 
- * Peso Relativo;
- * Escrita e Leitura em bps (incluindo múltiplos);
- * Escrita e Leitura em Operações por segundo (IOPS).
+    # docker inspect --format=" {{ .NetworkSettings }} " <CONTAINER>
+    # docker exec -it <CONTAINER> ip a
+
+Na primeira forma, utiliza-se o parâmetro inspect para retornar todos os metadados do contêiner enquanto que no segundo caso envia-se um comando em modo interativo para o contêiner "ip a", que irá retornar o endereço do contêiner.
+
+Para o caso em que dois ou mais contêineres que dependem entre si e estão conectados a rede 'docker0' (e também considerando a volatilidade da recepção dos endereços IP dos contêineres) é necessário fazer o uso de links entre os contêineres de forma que estes passem a referenciar um nome específico (mas que não precisa ser um FQDN); dessa forma, cada contêiner passa a 'conhecer' o endereçamento do outro contêiner, informação essa que pode ser usada em uma aplicação na forma "CONTAINER:NOME". Exemplo:
+
+.. code-block:: bash
+
+    # docker run -d --name postgres-principal postgres
+    # docker run -d --name app --link postgres-principal:db httpd
+    
+No caso acima, o contêiner "app" reconhece o nome "db" e consegue resolver esse nome para o IP do contêiner "postgres-principal", mesmo que a ordem de inicialização e subsequentemente os IP's mudem.
+
+
+.. warning::
+    
+    Fazer um link entre dois contêineres não impede que o primeiro contêiner seja parado ou reiniciado; em verdade, caso o primeiro contêiner seja reiniciado o segundo também precisará ser para que o endereço do primeiro seja 'atualizado' para o segundo.
+
+Para os casos em que um determinado contêiner precisa ser acessível a outros computadores em uma rede pode-se utilizar o espelhamento de portas entre o contêiner e o host. Exemplo:
+
+.. code-block:: bash
+
+    # docker run -d --name postgres-default -p 5432:5432 postgres-default
+    
+No caso acima, espelhar-se-á a porta 5432 do host atual para a porta 5432 do contêiner; pode-se ainda realizar o espelhamento de forma dinâmica, através do parâmetro -P (maiúsculo):
+
+.. code-block:: bash
+
+    # docker run -d --name postgres-default -P postgres
+
+Os mapeamentos entre portas podem ser visualizados através do comando de listagem de contêineres ativos:
+
+.. code-block:: bash
+
+    # docker ps -a
+
+.. note::    
+
+    No caso do espelhamento dinâmico de portas, as portas começam a ser alocadas a partir da 32768 e seguem conforme a ordem de inicialização dos contêineres.
+
+
+Definição de redes pelo usuário
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Ao contrário da rede legada 'docker0', as redes criadas por um usuário possuem um número maior de recursos disponíveis; os principais são o suporte a resolução de nomes e a possibilidade de definir uma rede com range específico que poderá ser adicionada na criação e durante o funcionamento dos contêineres. Para tanto, utilize o seguinte comando:
+
+.. code-block:: bash
+
+    # docker network create --driver bridge --subnet 172.100.0.0/16 user_network
+    
+Após a criação da rede, é possível visualizar as informações gerais de quais redes estão definidas através do seguinte comando:
+
+.. code-block:: bash
+
+    # docker network ls
+
+E informações específicas sobre a rede criada através do seguinte comando:
+
+.. code-block:: bash
+
+    # docker network inspect user_network
+    
+A partir desse ponto, a criação de contêineres passa a receber o parâmetro "--network" conforme o exemplo abaixo:
+
+.. code-block:: bash
+
+    # docker run -d --name db --network=user_network postgres
+    # docker run -d --name app --network=user_network myapp
+    
+Para testar a resolução de nomes utilize o seguinte comando:
+
+.. code-block:: bash
+
+    # docker exec -it app ping db
+
+Para adicionar a rede a um contêiner em funcionamento, utilize o seguinte comando:
+
+.. code-block:: bash
+
+    # docker network connect <NETWORK> <CONTAINER>
+    
+Analogamente é possível desconectar uma interface de um contêiner em funcionamento:
+
+.. code-block:: bash
+
+    # docker network disconnect <NETWORK> <CONTAINER>
+
+    Por fim, para remover uma rede utilize o seguinte comando:
+    
+.. code-block:: bash
+
+    # docker network rm <NETWORK>
+    
+.. note::
+
+    Antes de se realizar a remoção de uma rede é necessário desconectar a interface dos contêineres conectados a mesma.
+
+Log-Drivers
+===========
+
+A partir do momento em que uma aplicação é encapsulada em forma de um contêiner espera-se que seus logs estejam disponíveis na saída padrão (/dev/stdout), pois o próprio docker inclui os recursos necessários para a guarda e leitura dos logs através de **drivers/plugins**; assim, uma série de **backends** são suportados, sendo os principais:
+
+ * Json-File: padrão, envia todos os logs para um arquivo Json no sistema de arquivos do host;
+ * Syslog: envia todas as mensagens para um servidor SysLog;
+ * GELF: formato de dados compatível com o GrayLog 2;
+ * FluentD: formato de dados compatível com o FluentD.
  
-A gerenciamento de recursos de disco através do docker somente funcionará de facto caso o Scheduler de IO do Kernel seja o CFQ. Para descobrir o scheduler em uso, utilize o seguinte comando:
+A configuração de *log forwarding* pode ser definida em dois níveis: contêiner e do próprio Docker (o que inclui todos os contêineres que foram criados como padrão).
+
+Json-File
+^^^^^^^^^
+
+"Json-File" é o driver de loggin padrão do Docker, onde um arquivo json passa a receber toda a saída advinda do contêiner. Inicialmente, para visualizar os logs de um contêiner utiliza-se o seguinte comando:
 
 .. code-block:: bash
 
-    # cat /sys/block/sda/queue/scheduler
+    # docker logs <CONTAINER>
+    # docker logs -f <CONTAINER>
     
-Caso o scheduler não esteja definodo como CQF, utilize o seguinte comando para realizar a mudança:
+Em sua configuração padrão, este driver simplesmente recolhe e mantém toda a informação disponível no arquivo de log; para evitar o crescimento desenfreado de logs é recomendável adicionar o parâmetro "--log-opt max-size" ao serviço:
 
 .. code-block:: bash
 
-    # echo cfq > /sys/block/sda/queue/scheduler
+    # systemctl edit --full docker
 
+Na linha que se inicia com "ExecStart" adicione os seguintes parâmetros:
 
-Para a definição de uso de recurso através do peso relativo, deve-se levar em conta os valores de 100 (mínimo, maior restrição) a 1000 (máximo, sem restrições). Para visualizar os resultados do teste a seguir será necessário abrir dois terminais; o primeiro conterá um contêiner cujo parâmetro **--blkio-weight** será 100 e o segundo 600. Os comandos a serem inseridos em cada terminal são:
-
-.. code-block:: bash
-
-    # docker run -it --rm --blkio-weight 600 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
-    # docker run -it --rm --blkio-weight 100 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
-    
-É possível ainda realizar a configuração do peso relativo para dispositivos específicos do sistema operacional. Esse tipo de controle é útil para os casos em que os arquivos do contêiner ficam em um determinado ponto de montagem enquanto que os volumes ficam outro. Exemplo:
-
-.. code-block:: bash
-
-    #docker run -it --rm --blkio-weight-device "/dev/vdb:500" fedora sh -c 'time dd if=/dev/zero of=/mnt/rede/test.out bs=1M count=512 oflag=direct'
-
-.. note::
-
-    Assim como no caso do peso relativo da CPU, a "limitação" do uso somente ocorrerá caso outro processo ou contêiner não esteja a fazer uso intensivo do I/O.
-    
-
-.. note::
-
-    Se ambos os parâmetros forem especificados ("--blkio-weight" e "--blkio-weight-device"), o primeiro passa a ser o padrão para o contêiner enquanto o segundo
+``
+    --log-driver=json-file --log-opt max-size=100m``
+``
 
 .. warning::
 
-    Mudar o **IO Scheduler** do Sistema Operacional pode ter consequências indesejáveis em algumas aplicações ou contêineres. Verifique junto ao fabricante da solução alvo possíveis problemas que podem ser causados quando do uso do CFQ como **IO Scheduler **.
-    
-A seguir, quando da utilização do gerenciamento via  **Escrita e Leitura em bps**, torna-se possível definir valores tanto para escrita quanto para a leitura. Os parâmetros utilizados para tanto são, respectivamente, "--device-read-bps" e "device-write-bps", que são utilizados em conjunto com o dispositivo ao quais os contêiner possuem acesso. Veja os exemplos abaixo:
+    Arquivos que chegarem ao limite especificado de tamanho do log terão suas informações sobrescritas.
+
+
+FluentD
+^^^^^^^
+
+O fluentD é um coletor de dados capaz de receber dados de diferentes níveis de infraestrutura e repassá-los a soluções específicas como o Apache Lucene/Elastic Search.
+
+Para iniciar um novo contêiner com o fluentD, utilize o comando abaixo:
 
 .. code-block:: bash
 
-    # docker run -it --rm --device-write-bps /dev/sda:10mb fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
-    # docker run -it --rm --device-read-bps /dev/sda:10mb fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
-
-Por fim, é possível também realizar o gerenciamento de recursos baseados em operações por segundo (leitura ou escrita):
-
-.. code-block:: bash
-
-    # docker run -it --rm --device-write-iops /dev/sda:20 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
+    # docker run -d -p 24224:24224 --name fluentd-server --restart=always -v /data:/fluentd/log fluent/fluentd
 
 
-=========
-Segurança
-=========
-
-Além do fato dos processos serem isolados através de *CGROUPS*, o docker dispõe ainda do uso de outros mecanismos disponíveis em um kernel Linux tais como:
-
- * Posix Caps: disponível a partir da versão 2.2, posix capabilites são divisões unitárias de permissões que um superusuário possui, que sendo atreladas a um binário, evitam a necessidade de uso do root ou bit de execução como outro usuário(setuid e setgid) . Ex: Utiliza-se apenas CAP_SYS_CHROOT para usar um chroot e CAP_SYS_NICE para mudar o prioridade de um processo ao invés de dar acesso como 'root' via setuid;
- * Seccomp: *Securing Compute Mode* é um recurso do kernel linux que permite restringir as chamadas do Kernel que podem ser executadas por um processo,
- * Apparmor: Módulo de segurança que tem por objetivo proteger o sistema operacional das aplicações. Comumente, o AppArmor possui um *profile* relacionada a cada aplicação a ser rodada com ações permitidas e proibidas. Padrão para o sistema Ubuntu e possui suporte disponível no Debian através da instalação do pacote de mesmo nome;
- * Selinux: *Secure Enhanced linux* ou *Selinux* é um módulo de segurança do Kernel que possui o mesmo objetivo do AppArmor: proteger o sistema operacional de ações danosas das aplicações. Padrão nas distribuições RedHat e seus derivados.
-
-**O Docker já trabalha com configurações de PCACPS, SecComp e AppArmor/Selinux por padrão em todas as imagens, pois já trás vários desses *profiles* junto com sua instalação padrão.**
-
-Posix Capabilities
-------------------
-
-O docker, por padrão, permite apenas uma pequena fatia de capabilities por padrão, como pode ser visto abaixo:
-
-.. image:: ../data/default_pcaps.png
-
-Capabilities são adicionadas ou removidas de um contêiner no momento de sua criação:
+Após o download e inicialização do fluentD, atualize a configuração do docker adicionando as seguintes diretivas:
 
 .. code-block:: bash
 
-    # docker run --cap-drop=NET_RAW --rm fedora bash
+    # systemctl edit --full docker
 
-No exemplo acima, mesmo como root, não é possível utilizar o comando 'ping', pois o contêiner não possui a capability CAP_NET_RAW.
-
-.. note::
-
-    Uma lista completa de *capabilities* pode ser vista em ``man capabilities``.
-
-
-https://docs.docker.com/engine/security/seccomp/
-
-Docker: Plugins de Autorização
-==============================
-
-Para fins de autorização, o docker suporta\* três métodos:
-
- #. Permissões do Socket Docker;
- #. Permissões de um proxy reverso que faça o *forwarding* da chamada de API para o endpoint tcp do docker;
- #. Suporte a plugins de autorização.
-
-Por padrão, somente o usuário root possui acesso ao socket do docker, que fica disponível em ``/var/run/docker.sock``. Isso acontece pelo fato de que, a partir do momento que um usuário possui acesso ao socket ele pode instrospectar
-informações acerca dos contêineres e até mesmo gerenciá-los ... criando, exemplo, contêineres com acesso privilegiado no ambiente do host. Por esse motivo, recomenda-se que o acesso ao arquivo de socket seja controlado afim de prover
-um nível mínimo de auditabilidade do ambiente.
-
-Da mesma forma, é possível fazer com que o docker passe a aceitar requisições através de TCP em sua API Rest; nesse caso, o docker **não** provê nenhuma forma de controle; em verdade, a partir do momento em que há conectividade para o endpoint do Docker, basta
-enviar as requisições HTTP's para realizar o gerenciamento do mesmo. Usualmente nesses casos, utiliza-se um proxy reverso antes da API Do docker (que nesse caso só é acessível através do endereço de localhost), que possui algum método de autenticação/autorização configurado
-e que, uma vez satisfeito pelo usuário, dá acesso ao gerenciamento do Docker como um todo.
-
-Por padrão, o Docker não vem configurado para permitir o acesso via TCP, sendo necessário adicionar o seguinte parâmetro a configuração do serviço:
+Na linha que se inicia com "ExecStart" adicione os seguintes parâmetros:
 
 ``
-    ExecStart= [...] -H 127.0.0.1:2375
+    --log-driver=fluentd --log-opt fluentd-address=localhost:24224 --log-opt tag="docker.{{.Name}}"
 ``
 
+
+Para visualizar a recepção dos logs, podemos utilizar o seguinte comando:
+
+.. code-block:: bash
+
+    # ls -la /data/docker*
+    # tail -f /data/docker<ID>.log
+
+Onde o nome do arquivo a ser visualizado é gerado automaticamente quando da primeira recepção dos logs.
+
+Abaixo um exemplo relativamente comum de funcionamento do fluentD e elastisearch em uma infraestrutura:
+
+ .. image:: ../data/fluentd-elasticsearch-kibana.png
+
+
 .. note::
 
-    A API do Docker pode ser configurada para operar via TLS/HTTPS para melhoria da segurança; mais informações disponíveis em: https://docs.docker.com/engine/security/https/
-
-Por fim, é possível realizar a criação de um **plugin** proverá a parte de autenticação e autorização, que funcionará da seguinte forma:
-
-.. image:: ../data/authz_allow.png
-
-.. image:: ../data/authz_deny.png
-
-.. note::
-
-    Informações de criação de plugins de autorização e autenticação estão disponíveis em: https://docs.docker.com/engine/extend/plugins_authorization/
+    Informações acerca do FluentD podem ser obtidas na página do projeto: http://docs.fluentd.org/articles/quickstart
 
