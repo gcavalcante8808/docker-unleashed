@@ -2,214 +2,107 @@
 
 .. toctree::
 
-*********************************************
-Aula 2: Docker: Funcionamento e Gerenciamento
-*********************************************
+*****************************************************
+Aula 2: Docker: Persistência de Dados e Configurações
+*****************************************************
 
-Rede
-----
+Sistema de Arquivos dos Contêiners 
+----------------------------------
 
-Historicamente, o Docker possui três redes previamente configuradas que podem ser utilizadas por futuros contêineres:
+Os sistemas de arquivos utilizados pelos contêiners são, comumente, reflexos do sistema de arquivos do host organizado por uma tecnologia de **UnionFS** e que suporta o conceito de **COW - Copy On Write**, organizando o sistema de arquivos em várias camadas com diferentes versões de arquivos e se apresentando de forma consolidada ao contêiner. 
 
- * "docker0": Rede bridge padrão configurada para utilizar a subrede 172.17.0.0/16;
- * "none": Para casos em que se deseja que um contêiner não possua suporte a Rede (os contêineres ainda terão o suporte a interface de loopback);
- * "host": Espelha as mesmas conexões presentes no host para o contêiner.
+No caso das imagens, cada diretiva utilizada no momento de sua construção resulta em uma camada adicional no sistema de arquivos; isso permite que diferentes imagens que reutilizem os dados de diretiva em comum além de**compartilhar as camadas existentes e evitar o uso adicional/intensivo de disco**, conforme ilustrado na imagem abaixo:
+
+.. image:: ../data/container-layers.jpg
+
+Assim, as camadas relativas à imagem permanecem inalteradas ao passo que o uma camada relativa a um contêiner são plenamente alteráveis; no entanto, o conjunto excessivo de operações de escrita na camada relativa a um contêiner devem ser evitadas pois incorrem em diferentes níveis de perda de *throughput* a depender do *storage driver* utilizado. Maiores Inofrmações no capítulo "Storage Drivers" da Aula 4.
+
+.. warning::
+
+    Todos os arquivos editados e/ou salvos no sistema de arquivos de um contêiner são removidos (perdidos) quando da remoção do mesmo.
+
+Volumes
+-------
+
+Ao contrário do sistema de arquivos do contêiner, que são removidos quando da exclusão do mesmo, os **volumes** são áreas de dados **persistentes**, normalmente diretórios do sistema de arquivos do *host* ou de um *storage* disponibilizados  para um contêiner algo análogo a montagem de volumes que ocorre nos sistemas operacionais Posix. Ao contrário dos sistemas de arquivos dos contêineres, volumes **não sofrem** *overheads* de escrita e também não são perdidos (a menos que se utilize o parâmetro -v na remoção do contêiner) com a exclusão/criação de contêineres.
+
+Para realizar a montagem de um volume que se reflita em uma pasta do sistemas de arquivo local em um contêiner, pode-se utilizar o parâmetro "-v /diretorio:/pontodemontagem", como no exemplo abaixo:
+
+.. code-block:: bash
+
+    # docker run -d -v /data:/tmp/data httpd
+
+No exemplo acima a pasta "/diretorio" será *montada* dentro do endereço "/pontodemontagem" do contêiner.
+
+.. note::
+    
+    Caso a pasta a ser montada no contêiner não existe a mesma será criada no sistemas de arquivos. 
+    
+
+Adicionalmente também é possível realizar a montagem em modo somente-leitura adicionando a diretiva ":ro" ao final da declaração:
+
+.. code-block:: bash
+
+    # docker run -d -v /data:/tmp/data:ro httpd
+    
+Para os casos em que um mesmo volume precisa ser reutilizado, pode-se criar um contêiner de dados, para então reutilizá-lo nos demais contêineres:
+
+.. code-block:: bash
+
+    # docker run -d --name data-container -v /data:/tmp/data ubuntu bash
+    # docker run -d --name app1 --volumes-from data-container myapp-image
+    # docker run -d --name app2 --volumes-from data-container myapp-image
+
+.. note::
+    
+    Note que o contêiner de dados não precisará estar iniciado para que as configurações de montagem sejam reaproveitadas pelos demais contêineres. 
+    
+.. note::
+
+    Uma possível exclusão do contêiner de dados não causa impactos a contêineres já criados que tenham feito a utilização das configurações do volume; no entanto, novos contêineres não poderão
+    fazer a importação da configuração de volume a partir do mesmo uma vez que este foi excluído.
+    
+Há ainda diversos plugins que permitem usar diferentes sistemas de arquivos que não o local como volumes. Mais informações no capítulo "Escalabilidade & Monitoramento: Storage Plugins".
+    
+Named Volumes
+^^^^^^^^^^^^^
+
+Além da montagem de volumes do sistema de arquivos para um contêiner, é possível ainda fazer a criação e montagem de um *named volume*, que é um volume inicializado durante a criação do contêiner e gerenciado pelo próprio Docker.
+
+Um *named volume* é normalmente utilizado nas seguintes situações:
+
+ 1. Quando da utilização de plugins do docker para suporte a volumes (NetApp, Convoy, etc);
+ 2. Padronização dos volumes no ambiente.
  
-Durante a criação de um contêiner este é automaticamente atrelado a interface "docker0": uma regra de NAT é criada no firewall do host e o contêiner recebe um IP randômico dentro da faixa 172.17.0.0/16 e quaisquer portas expostas (diretiva "EXPOSE" no Dockerfile) são acessíveis na forma IP:PORTA.
-
-.. note::
-
-    Os Endereços IP recebidos por um contêiner não possuem nenhuma garantia de continuidade; em verdade, os IP's são atribuídos na ordem em que os contêineres são iniciados, começando por 172.17.0.2, sendo que o endereço 172.17.0.1 é o gateway de acesso para a interface 'docker0'.
-
-.. warning::
-
-    É importante frisar que todos os contêineres que forem colocados sob a interface "docker0" terão plena conectividade entre si, mas não haverá suporte a resolução de nomes: apenas através de um **link** entre os contêineres ou em uma nova rede criada esse suporte estará disponível.
-
-Para se descobrir o Ip de um contêiner pode-se utilizar as seguintes formas:
+A criação de um *named volume* normalmente ocorre através do seguinte comando:
 
 .. code-block:: bash
-
-    # docker inspect --format=" {{ .NetworkSettings }} " <CONTAINER>
-    # docker exec -it <CONTAINER> ip a
-
-Na primeira forma, utiliza-se o parâmetro inspect para retornar todos os metadados do contêiner enquanto que no segundo caso envia-se um comando em modo interativo para o contêiner "ip a", que irá retornar o endereço do contêiner.
-
-Para o caso em que dois ou mais contêineres que dependem entre si e estão conectados a rede 'docker0' (e também considerando a volatilidade da recepção dos endereços IP dos contêineres) é necessário fazer o uso de links entre os contêineres de forma que estes passem a referenciar um nome específico (mas que não precisa ser um FQDN); dessa forma, cada contêiner passa a 'conhecer' o endereçamento do outro contêiner, informação essa que pode ser usada em uma aplicação na forma "CONTAINER:NOME". Exemplo:
-
-.. code-block:: bash
-
-    # docker run -d --name postgres-principal postgres
-    # docker run -d --name app --link postgres-principal:db httpd
     
-No caso acima, o contêiner "app" reconhece o nome "db" e consegue resolver esse nome para o IP do contêiner "postgres-principal", mesmo que a ordem de inicialização e subsequentemente os IP's mudem.
+    # docker volume create --driver local --name volume1
 
-
-.. warning::
-    
-    Fazer um link entre dois contêineres não impede que o primeiro contêiner seja parado ou reiniciado; em verdade, caso o primeiro contêiner seja reiniciado o segundo também precisará ser para que o endereço do primeiro seja 'atualizado' para o segundo.
-
-Para os casos em que um determinado contêiner precisa ser acessível a outros computadores em uma rede pode-se utilizar o espelhamento de portas entre o contêiner e o host. Exemplo:
+Após a criação de um volume, a lista com todos os volumes pode ser visualizada através do seguinte comando:
 
 .. code-block:: bash
 
-    # docker run -d --name postgres-default -p 5432:5432 postgres-default
-    
-No caso acima, espelhar-se-á a porta 5432 do host atual para a porta 5432 do contêiner; pode-se ainda realizar o espelhamento de forma dinâmica, através do parâmetro -P (maiúsculo):
+    # docker volume ls
+
+A utilização do volume por um contêiner possui sintaxe parecida com a montagem de volumes do sistema de arquivos, conforme pode ser visualizado abaixo:
 
 .. code-block:: bash
 
-    # docker run -d --name postgres-default -P postgres
+    # docker run -d postgres-default -v volume1:/var/lib/postgresql/data
 
-Os mapeamentos entre portas podem ser visualizados através do comando de listagem de contêineres ativos:
-
-.. code-block:: bash
-
-    # docker ps -a
-
-.. note::    
-
-    No caso do espelhamento dinâmico de portas, as portas começam a ser alocadas a partir da 32768 e seguem conforme a ordem de inicialização dos contêineres.
-
-
-Definição de redes pelo usuário
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Ao contrário da rede legada 'docker0', as redes criadas por um usuário possuem um número maior de recursos disponíveis; os principais são o suporte a resolução de nomes e a possibilidade de definir uma rede com range específico que poderá ser adicionada na criação e durante o funcionamento dos contêineres. Para tanto, utilize o seguinte comando:
+A remoção de um *named volume* pode ser realizada através do seguinte comando:
 
 .. code-block:: bash
 
-    # docker network create --driver bridge --subnet 172.100.0.0/16 user_network
-    
-Após a criação da rede, é possível visualizar as informações gerais de quais redes estão definidas através do seguinte comando:
-
-.. code-block:: bash
-
-    # docker network ls
-
-E informações específicas sobre a rede criada através do seguinte comando:
-
-.. code-block:: bash
-
-    # docker network inspect user_network
-    
-A partir desse ponto, a criação de contêineres passa a receber o parâmetro "--network" conforme o exemplo abaixo:
-
-.. code-block:: bash
-
-    # docker run -d --name db --network=user_network postgres
-    # docker run -d --name app --network=user_network myapp
-    
-Para testar a resolução de nomes utilize o seguinte comando:
-
-.. code-block:: bash
-
-    # docker exec -it app ping db
-
-Para adicionar a rede a um contêiner em funcionamento, utilize o seguinte comando:
-
-.. code-block:: bash
-
-    # docker network connect <NETWORK> <CONTAINER>
-    
-Analogamente é possível desconectar uma interface de um contêiner em funcionamento:
-
-.. code-block:: bash
-
-    # docker network disconnect <NETWORK> <CONTAINER>
-
-    Por fim, para remover uma rede utilize o seguinte comando:
-    
-.. code-block:: bash
-
-    # docker network rm <NETWORK>
+    # docker volume rm volume1
     
 .. note::
 
-    Antes de se realizar a remoção de uma rede é necessário desconectar a interface dos contêineres conectados a mesma.
+    A remoção de um volume só poderá se dar quando da não utilização do mesmo por um contêiner.
 
-Log-Drivers
-===========
-
-A partir do momento em que uma aplicação é encapsulada em forma de um contêiner espera-se que seus logs estejam disponíveis na saída padrão (/dev/stdout), pois o próprio docker inclui os recursos necessários para a guarda e leitura dos logs através de **drivers/plugins**; assim, uma série de **backends** são suportados, sendo os principais:
-
- * Json-File: padrão, envia todos os logs para um arquivo Json no sistema de arquivos do host;
- * Syslog: envia todas as mensagens para um servidor SysLog;
- * GELF: formato de dados compatível com o GrayLog 2;
- * FluentD: formato de dados compatível com o FluentD.
- 
-A configuração de *log forwarding* pode ser definida em dois níveis: contêiner e do próprio Docker (o que inclui todos os contêineres que foram criados como padrão).
-
-Json-File
-^^^^^^^^^
-
-"Json-File" é o driver de loggin padrão do Docker, onde um arquivo json passa a receber toda a saída advinda do contêiner. Inicialmente, para visualizar os logs de um contêiner utiliza-se o seguinte comando:
-
-.. code-block:: bash
-
-    # docker logs <CONTAINER>
-    # docker logs -f <CONTAINER>
     
-Em sua configuração padrão, este driver simplesmente recolhe e mantém toda a informação disponível no arquivo de log; para evitar o crescimento desenfreado de logs é recomendável adicionar o parâmetro "--log-opt max-size" ao serviço:
-
-.. code-block:: bash
-
-    # systemctl edit --full docker
-
-Na linha que se inicia com "ExecStart" adicione os seguintes parâmetros:
-
-``
-    --log-driver=json-file --log-opt max-size=100m``
-``
-
-.. warning::
-
-    Arquivos que chegarem ao limite especificado de tamanho do log terão suas informações sobrescritas.
-
-
-FluentD
-^^^^^^^
-
-O fluentD é um coletor de dados capaz de receber dados de diferentes níveis de infraestrutura e repassá-los a soluções específicas como o Apache Lucene/Elastic Search.
-
-Para iniciar um novo contêiner com o fluentD, utilize o comando abaixo:
-
-.. code-block:: bash
-
-    # docker run -d -p 24224:24224 --name fluentd-server --restart=always -v /data:/fluentd/log fluent/fluentd
-
-
-Após o download e inicialização do fluentD, atualize a configuração do docker adicionando as seguintes diretivas:
-
-.. code-block:: bash
-
-    # systemctl edit --full docker
-
-Na linha que se inicia com "ExecStart" adicione os seguintes parâmetros:
-
-``
-    --log-driver=fluentd --log-opt fluentd-address=localhost:24224 --log-opt tag="docker.{{.Name}}"
-``
-
-
-Para visualizar a recepção dos logs, podemos utilizar o seguinte comando:
-
-.. code-block:: bash
-
-    # ls -la /data/docker*
-    # tail -f /data/docker<ID>.log
-
-Onde o nome do arquivo a ser visualizado é gerado automaticamente quando da primeira recepção dos logs.
-
-Abaixo um exemplo relativamente comum de funcionamento do fluentD e elastisearch em uma infraestrutura:
-
- .. image:: ../data/fluentd-elasticsearch-kibana.png
-
-
-.. note::
-
-    Informações acerca do FluentD podem ser obtidas na página do projeto: http://docs.fluentd.org/articles/quickstart
-
-
 Docker Compose
 ==============
 
