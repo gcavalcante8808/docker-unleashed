@@ -71,7 +71,7 @@ No exemplo acima, o retorno para o comando deve ser algo como:
 ``Cannot connect to the Docker daemon. Is the docker daemon running on this host?``
 
 O que acontece provavelmente, é que o usuário atual não possui acesso ao socket em /var/run/docker.sock, 
-que é URI padrão que o docker utiliza em seus comandos. Para remediar essa questão existem algumas
+que é URI padrão que o cliente docker utiliza em seus comandos. Para remediar essa questão existem algumas
 possibilidades:
 
 1. Rodar o comando como root;
@@ -79,7 +79,7 @@ possibilidades:
 3. Incluir o usuário no grupo 'Docker';
 4. Incluir a permissão para o usuário específico no socket do Docker.
 
-É recomendável que apenas usuários específicos possam gerenciar o docker (Mais detalhes nos capítulo relacionado a segurança).
+É recomendável que apenas usuários específicos possam gerenciar o docker.
 
 Antes de conceder o acesso, no entanto, faremos outras verificações:
 
@@ -118,6 +118,13 @@ Adicionalmente, para o que docker seja iniciado durante o processo de boot do co
 
     # systemctl enable docker.service
 
+Para que o usuário comum possua acesso ao socket do Docker será necessário adicioná-lo ao grupo do docker através do seguinte comando:
+
+.. code-block:: bash
+
+    # usermod -aG docker <USER>
+    
+Após o comando será necessário relogar ou aceder temporariamente como membro do grupo através do comando `newgrp docker`.
 
 Imagens, Contêineres e seu funcionamento
 ----------------------------------------
@@ -158,7 +165,7 @@ Quando se deseja iniciar um novo contêiner precisamos, primeiramente, receber o
 
 .. code-block:: bash
 
-    # docker images
+    $ docker images
     
 O resultado varia de acordo com a quantidade de imagens instaladas em determinado computador, podendo ser algo como:
 
@@ -171,7 +178,7 @@ Ou, caso não haja imagens instaladas, o seguinte resultado:
 
 Como pode ser visto nas figuras anteriores, uma imagem possui os seguintes atributos:
 
- * Repository (Repositório): Repositório de onde a imagem foi recebida. Quando uma imagem não possui um FQDN antes de seu nome (por exemplo 'postgres'), implica em dizer que essa imagem foi recebida a partir do repositório oficial do Docker, o hub.docker.com é uma imagem oficial. Outras informações no capítulo relacionado a ** tags ** posteriormente;
+ * Repository (Repositório): Repositório de onde a imagem foi recebida. Quando uma imagem não possui um FQDN antes de seu nome (por exemplo 'postgres'), implica em dizer que essa imagem foi recebida a partir do repositório oficial do Docker, o hub.docker.com é uma imagem oficial. Outras informações no capítulo relacionado a **tags** posteriormente;
  * Tag: Etiqueta atribuída a uma determinada imagem. Comumente relaciona a versão do software que foi encapsulada. Ex: postgres:9.6;
  * Image Id: utilizado tanto para a verificação da imagem durante seu download quanto para identificação (além do nome).
  * Created (Data de Criação): Data de criação da imagem;
@@ -181,7 +188,7 @@ Para realizar o recebimento de uma nova imagem, neste caso hospedada no site hub
 
 .. code-block:: bash
 
-    # docker pull hello-world
+    $ docker pull hello-world
 
 .. note::
 
@@ -196,7 +203,7 @@ Uma vez que já temos a imagem salva no host, basta agora realizar a criação n
 
 .. code-block:: bash
 
-    # docker run hello-world
+    $ docker run hello-world
 
 
 A execução do comando deve apresentar o seguinte resultado:
@@ -208,27 +215,27 @@ No entanto, se verificarmos se o contêiner ainda está em funcionamento ...
 
 .. code-block:: bash
 
-    # docker ps
+    $ docker ps
     
 Veremos que o mesmo não é mais listado dentre os contêineres em funcionamento. Para visualizarmos todos os contêineres, inclusive aqueles que não estão iniciados ou que estão com algum outro *status*, é possível utilizar o seguinte comando:
 
-    # docker ps -a
+    $ docker ps -a
 
 Por que o contêiner encontra-se em estado **Parado**?
 
-Conforme havíamos falado nos capítulos anteriores, um contêiner efetivamente disponibiliza um processo de uma aplicação; isso quer dizer que, caso a aplicação ou processo que esteja encapsulado no contêiner não esteja mais ativo ou **esteja em background**, *o próprio docker assume que aquele contêiner já executou o serviço a que se prestou e finaliza o processo*.
+Conforme havíamos falado nos capítulos anteriores, um contêiner efetivamente disponibiliza um processo de uma aplicação; isso quer dizer que, caso a aplicação ou processo que esteja encapsulado no contêiner não esteja mais ativo ou **esteja em background**, *o próprio docker assume que aquele contêiner já executou o serviço e coloca o contêiner dentre os não ativos usando o código de saída do mesmo*.
 
 Um segundo exemplo, mas que mantém o contêiner funcionando seria o seguinte:
 
 .. code-block:: bash
 
-    # docker run -d ubuntu /bin/sh -c "while true; do echo hello world; sleep 1; done"
+    $ docker run -d ubuntu /bin/sh -c "while true; do echo hello world; sleep 1; done"
     
 No caso acima, o contêiner executará eternamente o comando "echo hello world" ... que apesar de algo tolo, há de manter nosso contêiner em funcionamento:
 
 .. code-block:: bash
 
-    # docker ps
+    $ docker ps
 
 Ao iniciar o contêiner temos as mensagens de funcionamento da Aplicação, que utiliza o saída padrão no terminal atual impedindo que sejam feitas outras ações; parar o contêiner nesse caso pode ser feito através da combinação de teclas CTRL+C; o contêiner estará em um estado parado e poderá ser iniciado posteriormente de forma não interativa através do seguinte comando:
 
@@ -244,19 +251,19 @@ Ao iniciar o contêiner temos as mensagens de funcionamento da Aplicação, que 
     # docker run --name apache httpd:2.4
     # docker rename apache httpd24
 
-Por fim, para remover um contêiner que esteja parado, pode-se utilizar o seguinte comando:
+Para remover um contêiner que esteja parado, pode-se utilizar o seguinte comando:
 
 .. code-block:: bash
 
-    # docker rm apache
+    $ docker rm apache
 
 Para a remoção de um contêiner que esteja em funcionamento pode-se utilizar o seguinte comando:
 
 .. code-block:: bash
 
-    # docker rm -f apache
+    $ docker rm -f apache
 
-Para aplicações é **imperativo** que estas funcionem em primeiro plano (em inglês **FOREGROUND**) para que o contêiner possa ser manter ativo e o serviço em si disponível. Um exemplo clássico é o funcionamento do Apache como um microsserviço: o comando executado no contêiner é o 'httpd -foreground', o que impede que o Apache vá para segundo plano e evitando que o contêiner seja finalizado.
+É **imperativo** que estas funcionem em primeiro plano (em inglês **FOREGROUND**) para que o contêiner possa ser manter ativo e o serviço em si disponível. Um exemplo clássico é o funcionamento do Apache como um microsserviço: o comando executado no contêiner é o 'httpd -foreground', o que impede que o Apache vá para segundo plano e evitando que o contêiner seja finalizado.
 
 .. note::
 
@@ -266,31 +273,39 @@ Para aplicações é **imperativo** que estas funcionem em primeiro plano (em in
 
 .. code-block:: bash
 	
-	# docker run -it --rm debian bash
+	$ docker run -it --rm debian bash
 
 O comando acima utilizará uma imagem debian como base para criação do contêiner e abrirá um shell em modo interativo; quando da saída desse shell, através do comando exit, o contêiner será removido.
 
 Contêineres: *Debugging* e Execução de Comandos 'Ad-Hoc' 
 --------------------------------------------------------
 
-Uma vez que um contêiner encontra-se iniciado é possível realizar o *debugging* de tarefas acessando o shell do mesmo ou enviando comandos diretamente, através do seguinte comando:
+Uma vez que um contêiner encontra-se iniciado é possível realizar o *debugging* de tarefas acessando o shell do mesmo ou enviando comandos diretamente:
 
 .. code-block:: bash
 
-	# docker exec <CONTAINER> <CMD>
-	# docker exec <CONTAINER> python --version
+	$ docker exec <CONTAINER> <CMD>
+	$ docker exec <CONTAINER> python --version
 
 É possível ainda realizar a execução do comando em *background* através do parâmetro "-d" conforme demonstrado abaixo:
 
 .. code-block:: bash
 
-	# docker exec -d <CONTAINER> <CMD>
+	$ docker exec -d <CONTAINER> <CMD>
 
-Por fim, caso o comando a ser utilizado precise de interação ou ainda um pseudo terminal, então utilizar-se-á o parâmetro '-it':
+Caso o comando a ser utilizado precise de interação ou ainda um pseudo terminal, então utilizar-se-á o parâmetro '-it':
 
 .. code-block:: bash
 
-	# docker exec -it <CONTAINER> bash
+	$ docker exec -it <CONTAINER> bash
+
+Em casos em que aplicações aceitem sinais para funcionamento (muitas aplicações aceitam o sinal HUP afim de verificar mudanças de configuração e aplicar sem a necessidade da interrupção do serviço), pode-se utilizar o comando `docker kill`,conforme sintaxe abaixo:
+
+.. code-block:: bash
+
+    $ docker kill -s HUP <CONTAINER>
+    $ docker kill <CONTAINER> #Equivale a docker kill -S KILL <CONTAINER>
+    
 
 Criação de Imagens
 ------------------
@@ -310,15 +325,21 @@ Para ilustrar o uso de um DockerFile, faremos a criação do arquivo e a constru
 5. Salve e feche o arquivo;
 6. Execute o comando "docker build -t stress ."
 
-A diretiva final "docker build -t stress ." indica ao docker que uma imagem será construída a partir do diretório local, será etiquetada como "stress" (o que facilitará seu reconhecimento posterior), sendo que automaticamente o docker seleciona o arquivo Dockerfile no diretório atual
+A diretiva final "docker build -t stress ." indica ao docker que uma imagem será construída a partir do diretório local, será etiquetada como "stress" (o que facilitará seu reconhecimento posterior), sendo que automaticamente o docker seleciona o arquivo Dockerfile no diretório atual.
 
 Para visualizar a imagem, execute novamente o seguinte comando:
 
 .. code-block:: bash
 
-    # docker images
+    $ docker images
 
-Por fim, o Dockerfile é uma maneira transparente de compartilhar e averiguar a criação de uma imagem e é o método mais indicado de trabalho com o Docker.
+Vale lembrar que o Dockerfile é uma maneira transparente de compartilhar e averiguar a criação de uma imagem e é o método mais indicado de trabalho com o Docker.
+
+No entanto, o próprio Docker disponibiliza um meio para visualizar a forma como determinada imagem foi declarada através do comando docker history, que pode ser utilizado da maneira abaixo:
+
+.. code-block:: bash
+
+    $ docker history <IMAGE> --no-trunc
 
 
 Docker Commit
