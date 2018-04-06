@@ -27,3 +27,21 @@ Lembre-se que arquivos YAML utilizam a indentação para reconhecer os diferente
 As várias formas de realizar a declaração do arquivo 'docker-compose.yml' afim de se realizar o mapeamento dos recursos do Docker estão disponíveis em https://docs.docker.com/compose/compose-file/compose-file-v2/.
 
 É possível utilizar o comando docker-compose config para verificar se um arquivo docker-compose.yml é valido.
+
+Salvando os trabalhos
+---------------------
+
+Após a realização das atividades, salve o resultado do trabalho no github, através dos seguintes comandos (a partir da pasta onde os trabalhos se encontram):
+
+.. code-block:: bash
+
+    # Adicionar os arquivos atuais ao repositório
+    git add .
+    # Realizar o 'Commit' das mudanças no repositório local.
+    git commit -m "Aula 2 - Exercicio 1"
+    # Criar uma etiqueta para esta aula.
+    git tag -a aula2_2 -m "Aula 2 - Exercicio 2"
+    # Enviar as mudanças para o reposítório remoto.
+    git remote add https://github.com/<USUARIO>/docker-unleashed
+    git push -u origin master aula2_2
+    

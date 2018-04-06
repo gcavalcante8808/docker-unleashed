@@ -54,3 +54,20 @@ Se removermos o contêiner o que acontecerá com o volume?
 
 Se removermos o volume o que acontecerá o arquivo foo.log?
 
+Salvando os trabalhos
+---------------------
+
+Após a realização das atividades, salve o resultado do trabalho no github, através dos seguintes comandos (a partir da pasta onde os trabalhos se encontram):
+
+.. code-block:: bash
+
+    # Adicionar os arquivos atuais ao repositório
+    git add .
+    # Realizar o 'Commit' das mudanças no repositório local.
+    git commit -m "Aula 2 - Exercicio 1"
+    # Criar uma etiqueta para esta aula.
+    git tag -a aula2_1 -m "Aula 2 - Exercicio 1"
+    # Enviar as mudanças para o reposítório remoto.
+    git remote add https://github.com/<USUARIO>/docker-unleashed
+    git push -u origin master aula2_1
+    
