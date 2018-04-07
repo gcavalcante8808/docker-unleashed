@@ -13,117 +13,107 @@ Docker Registry
 
 O Docker Registry provê um serviço para hospedagem de imagens do Docker análogo ao que está disponível no hub.docker.com, porém com a possibilidade de uso e hospedagem em uma rede interna.
 
-Para iniciar um novo contêiner com o registry utilize o seguinte comando:
+Para criar um novo registry, crie uma nova pasta chamada 'registry' e então insira o seguinte conteúdo no arquivo docker-compose.yml:
 
-.. code-block:: bash
+.. literalinclude:: ../data/docker-compose.registry.1.yml
 
-    # mkdir /root/registry && cd /root/registry
-    # docker run -d -p 5000:5000 --restart=always -v /root/registry/data:/var/lib/registry --name registry registry:2
+Crie o contêiner através do comando ``docker-compose up -d``. O registry criado até esse momento utiliza a porta 5000 para comunicação, mas ainda não trabalha via TLS/HTTPS; Por padrão, o Docker não permite a comunicação sem TLS/HTTPS com um registry, a não ser que (por padrão) a url seja '127.0.0.1'.
 
+Para verificar quais *insecure registries* são aceitos pelo daemon do docker, utilize o comando "docker info"; a informação desejada estará ao final do comando, abaixo da linha que se inicia com "Insecure Registries:".
 
-Antes de enviar ou receber imagens a partir do novo registry, será necessário configurar o docker para permitir a interação entre o cliente e o registry. Nesse caso, inicie a edição da configuração do docker com o seguinte comando:
+Para registries externos, mesmo que estes utilizem um certificado auto assinado ou mesmo não suportem HTTPS, é possível configurar o Docker para aceitar *registries* adicionais. Para tanto, crie ou edite o arquivo "/etc/docker/daemon.json" inserindo as seguintes diretivas:
 
-.. code-block:: bash
+.. literalinclude:: ../data/daemon.1.json
 
-    # systemctl edit --full docker
-
-Na linha que se inicia com **ExecStart** adicione os seguintes parâmetros:
-
-    ``--insecure-registry=myregistry.com:5000``
 
 E por fim reinicie o docker para aplicar as configurações:
 
 .. code-block:: bash
 
-    # systemctl restart docker
-    
-Para verificar quais *insecure registries* são aceitos pelo daemon do docker, utilize o comando "docker info"; a informação desejada estará ao final do comando, abaixo da linha que se inicia com "Insecure Registries:".
+    $ sudo systemctl restart docker
+
 
 Uma vez que o docker está preparado, realizar o envio de uma imagem requer que **você defina tags nas imagens atuais que contenham o nome do repositório no formato registry:porta/imagem:tag** e faça o *push*, conforme o exemplo abaixo:
 
 .. code-block:: bash
 
-    # docker tag ubuntu myregistry:5000/ubuntu:yak
-    # docker push myregistry:5000/ubuntu:yak
+    $ docker tag ubuntu 127.0.0.1:5000/ubuntu:yak
+    $ docker push 127.0.0.1:5000/ubuntu:yak
 
 Realizar o download de imagens a partir do registry é igualmente fácil:
 
 .. code-block:: bash
 
-    # docker pull myregistry:5000/ubuntu:yak
-    
-No entanto, até então, toda a comunicação com o registry vem sendo realizada através de HTTP, ou seja, sem a criptografia da comunicação. Para ativar o suporte a TLS/HTTPS no acesso a aplicação, crie um certificado, remova o contêiner antigo e proceda da seguinte maneira:
+    $ docker pull 127.0.0.1:5000/ubuntu:yak
+
+No entanto, até então, toda a comunicação com o registry vem sendo realizada através de HTTP, ou seja, sem a criptografia. Para ativar o suporte a TLS/HTTPS no acesso a aplicação, será necessário criar uma certificado, atualizar o docker-compose.yml para que fique da seguinte maneira:
+
+.. literalinclude:: ../data/docker-compose.registry.2.yml
+
+Antes de inicializar a nova versão do contêiner, será necessário criar um volume para receber os certificados e criá-los através dos seguintes comandos:
 
 .. code-block:: bash
 
-    # mkdir -p /root/registry/certs
-    # cp domain.* /root/registry/certs
-    # docker run -d -p 5000:5000 --restart=always \
-      -v /root/registry/data:/var/lib/registry \
-      -v /root/registry/certs:/certs \
-      -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
-      -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
-      --name registry registry:2
+    $ docker volume create --driver local registry_certs
+    $ docker run --rm -e COMMON_NAME=localhost -e KEY_NAME=domain --mount type=volume,source=registry_certs,target=/certs centurylink/openssl
+    
+Com os certificados já criados no volume, resta apenas inicializar a nova versão do contêiner através do comando:
+
+.. code-block:: bash
+
+    $ docker-compose up -d
 
 .. note::
 
-    Para fins de aprendizado, o certificado pode ser gerado através do site http://www.selfsignedcertificate.com/. Para o ambiente de produção, solicite os certificados junto a área de infraestrutura.
+    Para o ambiente de produção, solicite os certificados junto a área de infraestrutura.
     
 
-É possível ainda fazer a restrição de acesso ao registry através da utilização de credenciais no estilo htpasswd. Para tanto, procesa da seguinte maneira:
+Por fim, é desejável fazer a restrição de acesso ao registry através da utilização de credenciais no estilo htpasswd/*basic auth*. Para tanto, atualize o docker-compose.yml relativo ao registry para que fique com o seguinte conteúdo:
+
+.. literalinclude:: ../data/docker-compose.registry.3.yml
+
+Antes de inicializar a nova versão do contêiner, será necessário criar um volume para receber o arquivo com as credenciais. Utilize os seguintes comandos para iniciá-los:
 
 .. code-block:: bash
 
-    # cd /root/registry && mkdir auth
-    # docker run --entrypoint htpasswd registry:2 -Bbn testuser testpassword > auth/htpasswd
-    # docker run -d -p 5000:5000 --restart=always \
-      -v /root/registry/data:/var/lib/registry \
-      -v /root/registry/certs:/certs \
-      -v /root/registry/auth:/auth \
-      -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
-      -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
-      -e "REGISTRY_AUTH=htpasswd" \
-      -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
-      -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
-      --name registry registry:2
+    $ docker volume create --driver local registry_auth
+    $ docker run --entrypoint htpasswd --mount type=volume,source=auth,target=/auth registry:2 -Bbn testuser testpassword > /auth/htpasswd
 
-Para realizar o login na registry, utilize o "docker login", conforme abaixo:
+Com o arquivo htpasswd já criado no volume auth, resta apenas inicializar a nova versão do contêiner através do comando:
 
 .. code-block:: bash
 
-    # docker login myregistry.enterprise.com:5000
+    $ docker-compose up -d
+
+Por conta da adição do suporte a credenciais, será necessário agora realizar o "login" para operar com o novo registry, que pode ser feito da seuginte maneira:
+
+.. code-block:: bash
+
+    # docker login 127.0.0.1:5000
 
 .. note::
 
     As informações de login são guardadas como *base64* no arquivo ~/.docker/config.json.
     
-
-Por fim, a criação do contêiner do registry pode ser refletida com o seguinte *compose file*:
-
- .. literalinclude:: ../data/docker-compose-registry.yml
-
 .. note::
 
-    Mais informações acerca do registry podem ser encontradas em: https://docs.docker.com/registry/configuration/
+    Mais informações acerca do registry, incluindo melhores práticas para seu uso em produção, podem ser encontradas em: https://docs.docker.com/registry/configuration/.
 
 Rede
 ----
 
-Historicamente, o Docker possui três redes previamente configuradas que podem ser utilizadas por futuros contêineres:
+Historicamente, o Docker possui três redes previamente configuradas que podem ser utilizadas:
 
  * "docker0": Rede bridge padrão configurada para utilizar a subrede 172.17.0.0/16;
  * "none": Para casos em que se deseja que um contêiner não possua suporte a Rede (os contêineres ainda terão o suporte a interface de loopback);
  * "host": Espelha as mesmas conexões presentes no host para o contêiner.
- 
-Durante a criação de um contêiner este é automaticamente atrelado a interface "docker0": uma regra de NAT é criada no firewall do host e o contêiner recebe um IP randômico dentro da faixa 172.17.0.0/16 e quaisquer portas expostas (diretiva "EXPOSE" no Dockerfile) são acessíveis na forma IP:PORTA.
+
+Durante a criação de um contêiner este é automaticamente atrelado a interface "docker0" caso seja criado através do comando ``docker run`` sem configuraçoes adicionais; para esse caso, uma regra de NAT é criada no firewall do host e o contêiner recebe um IP randômico dentro da faixa 172.17.0.0/16 e quaisquer portas expostas são acessíveis na forma IP:PORTA.
 
 .. note::
 
     Os Endereços IP recebidos por um contêiner não possuem nenhuma garantia de continuidade; em verdade, os IP's são atribuídos na ordem em que os contêineres são iniciados, começando por 172.17.0.2, sendo que o endereço 172.17.0.1 é o gateway de acesso para a interface 'docker0'.
 
-.. warning::
-
-    É importante frisar que todos os contêineres que forem colocados sob a interface "docker0" terão plena conectividade entre si, mas não haverá suporte a resolução de nomes: apenas através de um **link** entre os contêineres ou em uma nova rede criada esse suporte estará disponível.
 
 Para se descobrir o Ip de um contêiner pode-se utilizar as seguintes formas:
 
@@ -138,8 +128,8 @@ Para o caso em que dois ou mais contêineres que dependem entre si e estão cone
 
 .. code-block:: bash
 
-    # docker run -d --name postgres-principal postgres
-    # docker run -d --name app --link postgres-principal:db httpd
+    $ docker run -d --name postgres-principal postgres
+    $ docker run -d --name app --link postgres-principal:db httpd
     
 No caso acima, o contêiner "app" reconhece o nome "db" e consegue resolver esse nome para o IP do contêiner "postgres-principal", mesmo que a ordem de inicialização e subsequentemente os IP's mudem.
 
@@ -152,23 +142,27 @@ Para os casos em que um determinado contêiner precisa ser acessível a outros c
 
 .. code-block:: bash
 
-    # docker run -d --name postgres-default -p 5432:5432 postgres-default
+    $ docker run -d --name postgres-default -p 5432:5432 postgres:alpine
     
-No caso acima, espelhar-se-á a porta 5432 do host atual para a porta 5432 do contêiner; pode-se ainda realizar o espelhamento de forma dinâmica, através do parâmetro -P (maiúsculo):
+No caso acima, a porta 5432 do host atual será vinculada na porta 5432 do contêiner via firewall(iptables); pode-se ainda realizar o vínculo de forma dinâmica, através do parâmetro -P (maiúsculo):
 
 .. code-block:: bash
 
-    # docker run -d --name postgres-default -P postgres
+    $ docker run -d --name postgres-default -P postgres:alpine
 
-Os mapeamentos entre portas podem ser visualizados através do comando de listagem de contêineres ativos:
+Os mapeamentos entre portas podem ser visualizados tanto através do comando ``docker ports`` quando através do comando de listagem de contêineres ativos:
 
 .. code-block:: bash
 
-    # docker ps -a
+    $ docker ps -a
+    $ docker ports <CONTAINER>
 
 .. note::    
 
     No caso do espelhamento dinâmico de portas, as portas começam a ser alocadas a partir da 32768 e seguem conforme a ordem de inicialização dos contêineres.
+
+Por padrão, o vínculo de portas é gerenciada por um 
+
 
 
 Definição de redes pelo usuário

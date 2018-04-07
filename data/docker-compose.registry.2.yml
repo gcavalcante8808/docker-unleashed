@@ -1,0 +1,20 @@
+version: '2'
+
+volumes:
+  data:
+  registry_certs:
+    external: true
+  
+services:
+  registry:
+    image: registry:2
+    restart: unless-stopped
+    ports:
+     - 5000:5000
+    volumes:
+     - data:/var/lib/registry
+     - registry_certs:/certs
+    envinronment:
+     - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt
+     - REGISTRY_HTTP_TLS_KEY=/certs/domain.key
+
