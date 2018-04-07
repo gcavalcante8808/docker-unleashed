@@ -68,6 +68,5 @@ Após a realização das atividades, salve o resultado do trabalho no github, at
     # Criar uma etiqueta para esta aula.
     git tag -a aula2_1 -m "Aula 2 - Exercicio 1"
     # Enviar as mudanças para o reposítório remoto.
-    git remote add https://github.com/<USUARIO>/docker-unleashed
     git push -u origin master aula2_1
     
