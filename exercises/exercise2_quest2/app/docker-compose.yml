@@ -1,0 +1,12 @@
+version: '2'
+
+volumes:
+  aula2-logs:
+  
+services:
+  aula2:
+    image: oficina-docker:aula2-volumes
+    container_name: aula-2
+    volumes:
+     - aula2-logs:/tmp
+     

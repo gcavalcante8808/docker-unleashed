@@ -1,0 +1,18 @@
+version: '2'
+volumes:
+  app_data:
+  redis_data:
+  
+services:
+  app:
+    image: oficina:aula3-network
+    container_name: aula-3
+    build: .
+    volumes:
+     - app_data:/tmp
+     
+  redis:
+    image: redis:alpine
+    volumes:
+     - redis_data:/data
+

@@ -17,7 +17,7 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário aplicar u
 Informações e/ou questões adicionais
 ####################################
 
-Se uma determinada imagem estiver sendo utilizado por um contêiner, será necessário remover este contêiner antes de remover a imagem.
+Se uma determinada imagem estiver sendo utilizada por um contêiner, será necessário remover este contêiner antes de remover a imagem.
 
 Que tipo de recursos seriam desejáveis caso fosse desejado ter um registry que atendesse a um ambiente corporativo?
 

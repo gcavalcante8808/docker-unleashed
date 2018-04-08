@@ -33,7 +33,7 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário atualizar
 
 6. Remova o contêiner através do comando `docker rm -f aula-2`;
 
-7. Repita os passos 3 e 5 (sem passar pelo passo 4( e tente visualizar possíveis diferenças no arquivo foo.log;
+7. Repita os passos 3 e 5 (sem passar pelo passo 4) e tente visualizar possíveis diferenças no arquivo foo.log;
 
 8. Crie um volume chamado `aula2-logs` através do comando: `docker volume create aula2-logs`;
 

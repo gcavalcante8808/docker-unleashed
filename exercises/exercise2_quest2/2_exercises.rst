@@ -38,7 +38,7 @@ Após a realização das atividades, salve o resultado do trabalho no github, at
     # Adicionar os arquivos atuais ao repositório
     git add .
     # Realizar o 'Commit' das mudanças no repositório local.
-    git commit -m "Aula 2 - Exercicio 1"
+    git commit -m "Aula 2 - Exercicio 2"
     # Criar uma etiqueta para esta aula.
     git tag -a aula2_2 -m "Aula 2 - Exercicio 2"
     # Enviar as mudanças para o reposítório remoto.
