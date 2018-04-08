@@ -12,30 +12,30 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário implement
 2. Como root, rode o comando ``sysctl -w vm.max_map_count=262144`` necessário para funcionamento do ElasticSearch;
 3. Crie uma nova pasta e insira o seguinte conteúdo para o arquivo docker-compose.yml:
 
-.. literalinclude::  exercicio3/docker-compose.yml
+.. literalinclude::  app/docker-compose.yml
 
 4. Crie um arquivo chamado "fluentd.es.conf" na mesma pasta, contendo as seguintes configurações:
 
-.. literalinclude:: exercicio3/fluent.conf
+.. literalinclude:: app/fluent.conf
 
 5. Crie um arquivo chamado "nginx.conf" na mesma pasta, contendo as seguintes configurações:
 
-.. literalinclude:: exercicio3/nginx.conf
+.. literalinclude:: app/nginx.conf
 
 5. Inicialize os contêineres através do comando ``docker-compose up -d``. Nesse ponto, o elasticsearch e o Kibana podem demorar de 1 a 2 minutos para serem inicializalidos a depender da configuração de hardware do host;
 6. Realize algumas requisições HTTP para o endereço ``http://localhost:8082`` afim de que logs sejam gerados e enviados ao fluentd e elasticsearch;
 7. Acesse o Kibana através de um browser no endereço ``http://localhost5601`` e clique no item "Patterns", conforme figura abaixo:
 
-.. image:: exercicio3/pattern_1.png
+.. image:: pattern_1.png
 
 8. No campo index pattern inclua o valor "docker-web*" e em seguinte clique no botão "Next Step";
 9. Na tela seguinte, no campo "Time Filter field name" escolha a opção "@timestamp", conforme figura abaixo:
 
-.. image:: exercicio3/pattern_2.png
+.. image:: pattern_2.png
 
 10. Por fim, visualize os logs gerados clicando no item de menu "Discover" no painel lateral. A visualização há de ocorrer de forma parecida com a da figura abaixo:
 
-.. image:: exercicio3/discover_docker_web.png
+.. image:: discover_docker_web.png
 
 Salvando os trabalhos
 ---------------------

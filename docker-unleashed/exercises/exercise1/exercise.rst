@@ -33,6 +33,7 @@ Informações adicionais
 A imagem python disponibilizada pelo docker em suas diversas variantes (2, 3, 2-slim, 3-slim, 2-alpine, 3-alpine) já possui o PIP instalado, que pode ser utilizado para instalar bibliotecas a partir de um arquivo ou diretamente declarando o pacote a ser instalado, conforme os seguintes exemplos:
 
 .. code-block:: bash
+
     #Instalando a partir de um arquivo
     pip install -r requirements.txt
     #Instalando uma biblioteca diretamente
