@@ -89,7 +89,7 @@ Por conta da adição do suporte a credenciais, será necessário agora realizar
 
 .. code-block:: bash
 
-    # docker login 127.0.0.1:5000
+    $ docker login 127.0.0.1:5000
 
 .. note::
 
@@ -108,29 +108,29 @@ Historicamente, o Docker possui três redes previamente configuradas que podem s
  * "none": Para casos em que se deseja que um contêiner não possua suporte a Rede (os contêineres ainda terão o suporte a interface de loopback);
  * "host": Espelha as mesmas conexões presentes no host para o contêiner.
 
-Durante a criação de um contêiner este é automaticamente atrelado a interface "docker0" caso seja criado através do comando ``docker run`` sem configuraçoes adicionais; para esse caso, uma regra de NAT é criada no firewall do host e o contêiner recebe um IP randômico dentro da faixa 172.17.0.0/16 e quaisquer portas expostas são acessíveis na forma IP:PORTA.
+Durante a criação de um contêiner este é automaticamente atrelado a interface "docker0" caso seja criado através do comando ``docker run`` sem configurações adicionais; para esse caso, uma regra de NAT é criada no firewall do host e o contêiner recebe um IP randômico dentro da faixa 172.17.0.0/16 e quaisquer portas expostas são acessíveis na forma IP:PORTA.
 
 .. note::
 
     Os Endereços IP recebidos por um contêiner não possuem nenhuma garantia de continuidade; em verdade, os IP's são atribuídos na ordem em que os contêineres são iniciados, começando por 172.17.0.2, sendo que o endereço 172.17.0.1 é o gateway de acesso para a interface 'docker0'.
 
 
-Para se descobrir o Ip de um contêiner pode-se utilizar as seguintes formas:
+Para descobrir o Ip de um contêiner pode-se utilizar as seguintes formas:
 
 .. code-block:: bash
 
-    # docker inspect --format=" {{ .NetworkSettings }} " <CONTAINER>
-    # docker exec -it <CONTAINER> ip a
+    $ docker inspect --format=" {{ .NetworkSettings }} " <CONTAINER>
+    $ docker exec -it <CONTAINER> ip a
 
-Na primeira forma, utiliza-se o parâmetro inspect para retornar todos os metadados do contêiner enquanto que no segundo caso envia-se um comando em modo interativo para o contêiner "ip a", que irá retornar o endereço do contêiner.
+Na primeira forma, utiliza-se o parâmetro inspect para retornar os metadados do contêiner enquanto que no segundo caso envia-se um comando em modo interativo para o contêiner "ip a", que irá retornar o endereço do contêiner, se esse tiver o pacote iputils instalado.
 
-Para o caso em que dois ou mais contêineres que dependem entre si e estão conectados a rede 'docker0' (e também considerando a volatilidade da recepção dos endereços IP dos contêineres) é necessário fazer o uso de links entre os contêineres de forma que estes passem a referenciar um nome específico (mas que não precisa ser um FQDN); dessa forma, cada contêiner passa a 'conhecer' o endereçamento do outro contêiner, informação essa que pode ser usada em uma aplicação na forma "CONTAINER:NOME". Exemplo:
+Para o caso em que dois ou mais contêineres estão conectados a rede 'docker0' (e também considerando a volatilidade da recepção dos endereços IP dos contêineres) é necessário fazer o uso de links entre os contêineres de forma que estes passem a referenciar um nome específico (mas que não precisa ser um FQDN); dessa forma, cada contêiner passa a 'conhecer' o endereçamento do outro contêiner, informação essa que pode ser usada em uma aplicação na forma "CONTAINER:NOME". Exemplo:
 
 .. code-block:: bash
 
     $ docker run -d --name postgres-principal postgres
     $ docker run -d --name app --link postgres-principal:db httpd
-    
+   
 No caso acima, o contêiner "app" reconhece o nome "db" e consegue resolver esse nome para o IP do contêiner "postgres-principal", mesmo que a ordem de inicialização e subsequentemente os IP's mudem.
 
 
@@ -150,7 +150,7 @@ No caso acima, a porta 5432 do host atual será vinculada na porta 5432 do cont�
 
     $ docker run -d --name postgres-default -P postgres:alpine
 
-Os mapeamentos entre portas podem ser visualizados tanto através do comando ``docker ports`` quando através do comando de listagem de contêineres ativos:
+Os mapeamentos entre portas podem ser visualizados tanto através do comando ``docker ports`` quanto através do comando de listagem de contêineres ativos:
 
 .. code-block:: bash
 
@@ -161,9 +161,6 @@ Os mapeamentos entre portas podem ser visualizados tanto através do comando ``d
 
     No caso do espelhamento dinâmico de portas, as portas começam a ser alocadas a partir da 32768 e seguem conforme a ordem de inicialização dos contêineres.
 
-Por padrão, o vínculo de portas é gerenciada por um 
-
-
 
 Definição de redes pelo usuário
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -172,54 +169,56 @@ Ao contrário da rede legada 'docker0', as redes criadas por um usuário possuem
 
 .. code-block:: bash
 
-    # docker network create --driver bridge --subnet 172.100.0.0/16 user_network
+    $ docker network create --driver bridge --subnet 172.100.0.0/16 user_network
     
 Após a criação da rede, é possível visualizar as informações gerais de quais redes estão definidas através do seguinte comando:
 
 .. code-block:: bash
 
-    # docker network ls
+    $ docker network ls
 
 E informações específicas sobre a rede criada através do seguinte comando:
 
 .. code-block:: bash
 
-    # docker network inspect user_network
+    $ docker network inspect user_network
     
 A partir desse ponto, a criação de contêineres passa a receber o parâmetro "--network" conforme o exemplo abaixo:
 
 .. code-block:: bash
 
-    # docker run -d --name db --network=user_network postgres
-    # docker run -d --name app --network=user_network myapp
+    $ docker run -d --name db --network=user_network postgres
+    $ docker run -d --name app --network=user_network myapp
     
 Para testar a resolução de nomes utilize o seguinte comando:
 
 .. code-block:: bash
 
-    # docker exec -it app ping db
+    $ docker exec -it app ping db
 
 Para adicionar a rede a um contêiner em funcionamento, utilize o seguinte comando:
 
 .. code-block:: bash
 
-    # docker network connect <NETWORK> <CONTAINER>
+    $ docker network connect <NETWORK> <CONTAINER>
     
 Analogamente é possível desconectar uma interface de um contêiner em funcionamento:
 
 .. code-block:: bash
 
-    # docker network disconnect <NETWORK> <CONTAINER>
+    $ docker network disconnect <NETWORK> <CONTAINER>
 
     Por fim, para remover uma rede utilize o seguinte comando:
     
 .. code-block:: bash
 
-    # docker network rm <NETWORK>
+    $ docker network rm <NETWORK>
     
 .. note::
 
     Antes de se realizar a remoção de uma rede é necessário desconectar a interface dos contêineres conectados a mesma.
+
+Para o caso da utilização do docker-compose para gerenciamento dos contêineres, quando da inicialização dos contêineres, este cria uma rede automaticamente, normalmente com o padrão <PASTA>_default; da mesma forma, se nenhum contêiner estiver conectado a esta rede, remover os contêineres via ``docker-compose down`` fará com que essa rede também seja removida.
 
 Log-Drivers
 ===========
@@ -231,75 +230,69 @@ A partir do momento em que uma aplicação é encapsulada em forma de um contêi
  * GELF: formato de dados compatível com o GrayLog 2;
  * FluentD: formato de dados compatível com o FluentD.
  
-A configuração de *log forwarding* pode ser definida em dois níveis: contêiner e do próprio Docker (o que inclui todos os contêineres que foram criados como padrão).
+A configuração de *log forwarding* pode ser definida em dois níveis: contêiner e do próprio Docker (o que inclui todos os contêineres que foram criados como padrão), mas mantendo a capilaridade ao ponto de que cada contêiner pode ter seu próprio método de logging.
+
+Para o Docker, esta configuração é feita no arquivo "/etc/docker/daemon.json" ao passo que para um contêiner ela pode ser feita no "docker run" ou via docker-compose:
+
+.. literal-include:: ../data/docker-compose.logging.yml
+
+.. warning::
+
+    A utilização do comando ``docker logs`` ou ``docker-compose logs`` somente é possível quando da utilização dos logging drivers "json-file" ou "journald". Para os demais, os logs ficam indisponíveis pois são diretamente enviados às soluções conforme configuração.
 
 Json-File
 ^^^^^^^^^
 
-"Json-File" é o driver de loggin padrão do Docker, onde um arquivo json passa a receber toda a saída advinda do contêiner. Inicialmente, para visualizar os logs de um contêiner utiliza-se o seguinte comando:
+"Json-File" é o driver de logging padrão do Docker, onde um arquivo json passa a receber toda a saída advinda do contêiner. Inicialmente, para visualizar os logs de um contêiner utiliza-se o seguinte comando:
 
 .. code-block:: bash
 
-    # docker logs <CONTAINER>
-    # docker logs -f <CONTAINER>
+    $ docker logs <CONTAINER>
+    $ docker logs -f <CONTAINER>
     
-Em sua configuração padrão, este driver simplesmente recolhe e mantém toda a informação disponível no arquivo de log; para evitar o crescimento desenfreado de logs é recomendável adicionar o parâmetro "--log-opt max-size" ao serviço:
+Em sua configuração padrão, este driver simplesmente recolhe e mantém toda a informação disponível no arquivo de log; para evitar o crescimento desenfreado de logs é recomendável adicionar o parâmetro "--log-opt max-size" à configuração do docker, no arquivo daemon.json:
+
+
+.. literalinclude:: ../data/daemon.jsonfile.json
+
+Após fazer a mudança da configuração, reinicie o daemon do docker para aplicar as configurações:
 
 .. code-block:: bash
 
-    # systemctl edit --full docker
-
-Na linha que se inicia com "ExecStart" adicione os seguintes parâmetros:
-
-``
-    --log-driver=json-file --log-opt max-size=100m``
-``
+    $ sudo systemctl restart docker
 
 .. warning::
 
     Arquivos que chegarem ao limite especificado de tamanho do log terão suas informações sobrescritas.
-
 
 FluentD
 ^^^^^^^
 
 O fluentD é um coletor de dados capaz de receber dados de diferentes níveis de infraestrutura e repassá-los a soluções específicas como o Apache Lucene/Elastic Search.
 
-Para iniciar um novo contêiner com o fluentD, utilize o comando abaixo:
+Para iniciar um novo contêiner com o fluentD, crie uma pasta com o seguinte declaração do arquivo docker-compose.yml:
+
+.. literalinclude:: ../data/docker-compose.fluentd.yml
+
+A seguir, crie o arquivo de configuração básico do fluentd no mesmo diretório em que o arquivo docker-compose.yml se encontra com o seguinte conteúdo:
+
+.. literalinclude:: ../data/fluentd.stdout.yml
+
+Por fim, inicialize o contêiner do fluentd através do comando ``docker-compose up -d`` a partir da pasta onde o arquivo docker-compose.yml reside.
+
+Uma vez que o fluentd já está disponível, crie um novo contêiner através do seguinte comando:
 
 .. code-block:: bash
 
-    # docker run -d -p 24224:24224 --name fluentd-server --restart=always -v /data:/fluentd/log fluent/fluentd
+    $ docker run -d --name web-fluentd -p 8080:80 --log-driver=fluentd --log-opt fluentd-address=localhost:24224 nginx:alpine
 
-
-Após o download e inicialização do fluentD, atualize a configuração do docker adicionando as seguintes diretivas:
-
-.. code-block:: bash
-
-    # systemctl edit --full docker
-
-Na linha que se inicia com "ExecStart" adicione os seguintes parâmetros:
-
-``
-    --log-driver=fluentd --log-opt fluentd-address=localhost:24224 --log-opt tag="docker.{{.Name}}"
-``
-
-
-Para visualizar a recepção dos logs, podemos utilizar o seguinte comando:
+Após a criação do contêiner, realize algumas requisições http para o endereço 'http://localhost:8080' para que logs sejam gerados e, por fim, visualize a recepção destes através dos logs do próprio fluentd:
 
 .. code-block:: bash
-
-    # ls -la /data/docker*
-    # tail -f /data/docker<ID>.log
-
-Onde o nome do arquivo a ser visualizado é gerado automaticamente quando da primeira recepção dos logs.
-
-Abaixo um exemplo relativamente comum de funcionamento do fluentD e elastisearch em uma infraestrutura:
-
- .. image:: ../data/fluentd-elasticsearch-kibana.png
-
+    
+    $ docker-compose logs -f
 
 .. note::
 
-    Informações acerca do FluentD podem ser obtidas na página do projeto: http://docs.fluentd.org/articles/quickstart
+    Informações acerca do FluentD podem ser obtidas na página do projeto: http://docs.fluentd.org/articles/quickstart, assim como informações acerca das opções de integração do mesmo com o docker: https://docs.docker.com/config/containers/logging/fluentd.
 

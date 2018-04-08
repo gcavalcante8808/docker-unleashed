@@ -1,0 +1,5 @@
+{
+ "insecure-registries": ["url:5000"],
+ "log-driver": "json-file",
+ "log-opts": {"max-size": "10m"},
+}

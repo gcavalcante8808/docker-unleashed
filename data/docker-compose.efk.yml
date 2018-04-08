@@ -1,0 +1,39 @@
+version: '2.2'
+volumes:
+  esdata1:
+  kibana-plugins:
+  kibana-bundle:
+
+services:
+  fluentd:
+    image: "fluent/fluentd"
+    restart: unless-stopped
+    ports:
+     - 24224:24224
+    volumes:
+     - fluentd.es.conf:/fluentd/etc/fluentd.es.conf
+
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:6.1.2"
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+
+  kibana:
+    image: "docker.elastic.co/kibana/kibana:6.1.2"
+    ports:
+     - 5601:5601
+    volumes:
+     - kibana-plugins:/usr/share/kibana/plugins
+     - kibana-bundle:/usr/share/kibana/optimize
+
+  web-test:
+    image: nginx:alpine
+    ports:
+     - 8080:80
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: fluent:24224
+        fluentd-async-connect: true
+        fluentd-retry-wait: 5
+
