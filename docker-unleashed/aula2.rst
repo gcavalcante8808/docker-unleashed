@@ -23,7 +23,7 @@ Assim, as camadas relativas à imagem permanecem inalteradas ao passo que uma ca
 
 Após a criação de um contêiner, é possível visualizar quais dados que residem no sistema de arquivos do mesmo foram mudados, adicionados ou removidos, através do comando `docker diff <CONTAINER>`:
 
-.. image:: data/docker_diff.png
+.. image:: ../data/docker_diff.png
 
 No exemplo acima, há adições "A" e mudanças "C"; para remoções o *status* seria indicado pela letra "D" no início da linha.
 
@@ -202,23 +202,25 @@ No exemplo acima, temos um *named volume* chamado "data" e uma rede chamada "dat
 
 Para o caso em que se deseja utilizar recursos previamente existentes, desde contêineres a redes pode-se utilizar a diretiva "external: true" conforme exemplo abaixo:
 
-``
+.. code-block:: yaml
+
   volumes:
     myvol:
       external: true
-``
+
 
 Considera-se como "external" quaisquer recursos que não serão gerenciados a partir do arquivo docker-compose.yml atual; podem ser recursos de qualquer espécie como volumes criados manualmente, redes, dentre outros.
 
 A utilização de recursos de ambos os tipos (gerenciados e não gerenciados pelo compose) pode ser descrita da seguinte maneira:
 
-``
+.. code-block:: yaml
+
     volumes:
       db:
         external: false
       backup:
         external: true
-``
+
 
 
 Docker Compose: Composição de configurações

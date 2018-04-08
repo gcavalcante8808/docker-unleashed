@@ -234,7 +234,7 @@ A configuração de *log forwarding* pode ser definida em dois níveis: contêin
 
 Para o Docker, esta configuração é feita no arquivo "/etc/docker/daemon.json" ao passo que para um contêiner ela pode ser feita no "docker run" ou via docker-compose:
 
-.. literal-include:: ../data/docker-compose.logging.yml
+.. literalinclude:: ../data/docker-compose.logging.yml
 
 .. warning::
 
@@ -276,7 +276,7 @@ Para iniciar um novo contêiner com o fluentD, crie uma pasta com o seguinte dec
 
 A seguir, crie o arquivo de configuração básico do fluentd no mesmo diretório em que o arquivo docker-compose.yml se encontra com o seguinte conteúdo:
 
-.. literalinclude:: ../data/fluentd.stdout.yml
+.. literalinclude:: ../data/fluentd.stdout.conf
 
 Por fim, inicialize o contêiner do fluentd através do comando ``docker-compose up -d`` a partir da pasta onde o arquivo docker-compose.yml reside.
 

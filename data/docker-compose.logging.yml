@@ -1,0 +1,19 @@
+version: '2'
+
+volumes:
+  data:
+  
+services:
+  registry:
+    image: registry:2
+    restart: unless-stopped
+    ports:
+     - 5000:5000
+    volumes:
+     - data:/var/lib/registry
+    logging:
+      driver: json-file
+      options:
+        max-size: "200k"
+        max-file: "10"
+

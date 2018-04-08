@@ -4,7 +4,7 @@ services:
   fluentd:
     image: "fluent/fluentd"
     volumes:
-     - ./stdout.conf:/fluentd/etc/stdout.conf
+     - ./stdout.conf:/fluentd/etc/fluent.conf
     ports:
      - 24224:24224
     restart: unless-stopped
