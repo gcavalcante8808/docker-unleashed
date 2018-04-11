@@ -14,14 +14,14 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário implement
 
 .. literalinclude::  app/docker-compose.yml
 
-4. Criar uma pasta chamada "fluentd" dentro da pasta "logs" e, nela, crie o arquivo docker-compose.yml com o seguinte conteúdo:
+4. Criar uma pasta chamada "fluentd" dentro da pasta "logs" e, nela, criar o arquivo Dockerfile com o seguinte conteúdo:
 
 .. code-block:: yaml
 
     FROM fluent/fluentd
     RUN gem install fluent-plugin-elasticsearch --no-rdoc --no-ri
 
-5. Ainda na pasta "fluentd", crie um arquivo chamado "fluent.conf" contendo as seguintes configurações:
+5. Ainda na pasta "fluentd", proceda com a criação de um arquivo chamado "fluent.conf" contendo as seguintes configurações:
 
 .. literalinclude:: app/fluentd/fluent.conf
 
@@ -31,7 +31,7 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário implement
 
 5. Inicializar os contêineres através do comando ``docker-compose up -d``. Nesse ponto, o elasticsearch e o Kibana podem demorar de 1 a 2 minutos para serem inicializalidos a depender da configuração de hardware do host;
 6. Realizar algumas requisições HTTP para o endereço ``http://localhost:8082`` afim de que logs sejam gerados e enviados ao fluentd e elasticsearch;
-7. Acessar o Kibana através de um browser no endereço ``http://localhost5601`` e clicar no item "Patterns", conforme figura abaixo:
+7. Acessar o Kibana através de um browser no endereço ``http://localhost:5601`` e clicar no item "Patterns", conforme figura abaixo:
 
 .. image:: pattern_1.png
 
