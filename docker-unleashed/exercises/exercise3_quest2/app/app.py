@@ -6,11 +6,11 @@ from flask.ext.redis import FlaskRedis
 import logging
 import datetime
 
-#Redis Connection URL
-REDIS_URL = "redis://redis:6379/0"
-
 #Create the App
 app = Flask(__name__)
+
+#Redis Connection URL
+app.config['REDIS_URL'] = "redis://redis:6379/0"
 
 #Bind Redis Connection to app
 redis_store = FlaskRedis(app)

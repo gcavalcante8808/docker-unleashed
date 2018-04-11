@@ -2,9 +2,9 @@
 
 .. toctree::
 
-**********************************************
-Persistências de Imagens em um Docker Registry
-**********************************************
+*******************************************************************
+Cap. 3 - Exercício1: Persistências de Imagens em um Docker Registry
+*******************************************************************
 
 Para aplicar os conhecimentos explanados nesta aula, será necessário aplicar uma *tag* a imagem criada na aula anterior, de forma que seja possível enviar esta imagem para o registry central. As ações realizadas devem balizar o conjunto de especificações abaixo:
 
@@ -34,6 +34,6 @@ Após a realização das atividades, salve o resultado do trabalho no github, at
     git commit -m "Aula 3 - Exercicio 1"
     # Criar uma etiqueta para esta aula.
     git tag -a aula3_1 -m "Aula 3 - Exercicio 1"
-    # Enviar as mudanças para o reposítório remoto.
+    # Enviar as mudanças para o repositório remoto.
     git push -u origin master aula3_1
     

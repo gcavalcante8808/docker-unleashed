@@ -2,9 +2,9 @@
 
 .. toctree::
 
-*****************************************************
-Centralização e Visualização dos Logs dos Contêineres
-*****************************************************
+***************************************************************************
+Cap. 3 - Exercício 3: Centralização e Visualização dos Logs dos Contêineres
+***************************************************************************
 
 Para aplicar os conhecimentos explanados nesta aula, será necessário implementar um conjunto de soluções e integrações para guarda de logs de um contêiner de teste plenamente funcional. Para tanto, as ações abaixo balizam a implantação de um *stack* utilizando fluentd (coleta/recepção), elasticsearch (guarda) e Kibana (Visualização):
 

@@ -99,8 +99,9 @@ Por conta da adição do suporte a credenciais, será necessário agora realizar
 
     Mais informações acerca do registry, incluindo melhores práticas para seu uso em produção, podem ser encontradas em: https://docs.docker.com/registry/configuration/.
 
-Rede
-----
+============================
+Redes definidas por Software
+============================
 
 Historicamente, o Docker possui três redes previamente configuradas que podem ser utilizadas:
 
@@ -220,8 +221,10 @@ Analogamente é possível desconectar uma interface de um contêiner em funciona
 
 Para o caso da utilização do docker-compose para gerenciamento dos contêineres, quando da inicialização dos contêineres, este cria uma rede automaticamente, normalmente com o padrão <PASTA>_default; da mesma forma, se nenhum contêiner estiver conectado a esta rede, remover os contêineres via ``docker-compose down`` fará com que essa rede também seja removida.
 
-Log-Drivers
-===========
+===============
+Logging Drivers
+===============
+
 
 A partir do momento em que uma aplicação é encapsulada em forma de um contêiner espera-se que seus logs estejam disponíveis na saída padrão (/dev/stdout), pois o próprio docker inclui os recursos necessários para a guarda e leitura dos logs através de **drivers/plugins**; assim, uma série de **backends** são suportados, sendo os principais:
 

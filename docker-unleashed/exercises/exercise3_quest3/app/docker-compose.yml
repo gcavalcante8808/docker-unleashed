@@ -27,6 +27,9 @@ services:
      - kibana-plugins:/usr/share/kibana/plugins
      - kibana-bundle:/usr/share/kibana/optimize
 
+  monit:
+    image: docker.elastic.co/beats/metricbeat:6.1.2
+
   web-test:
     image: nginx:alpine
     volumes:

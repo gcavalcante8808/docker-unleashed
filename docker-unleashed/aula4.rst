@@ -3,7 +3,7 @@
 .. toctree::
 
 *************************************
-Aula4: Escalabilidade & Monitoramento
+Aula4: Gerenciamento de Recursos
 *************************************
 
 
@@ -36,13 +36,13 @@ Para o caso de peso relativo, leva-se em conta que cada contêiner possui até 1
 
 .. code-block:: bash
     
-    # docker run -it --rm --cpu-shares 256 stress --cpu 1
+    $ docker run -it --rm --cpu-shares 256 stress --cpu 1
 
 A seguir criamos um contêiner que não possui configuração de uso da CPU, ou seja, sem faixa mínima de uso:
 
 .. code-block:: bash
     
-    # docker run -it --rm stress --cpu 1
+    $ docker run -it --rm stress --cpu 1
 
 Nesse caso, para um uso proporcional de 10% do sistema operacional, o primeiro contêiner ficaria com uso de algo em torno de 20%, enquanto o segundo utilizaria o restante da CPU.
 
@@ -50,13 +50,13 @@ No caso da definição da afinidade de um contêiner basta indicar as CPU's alvo
 
 .. code-block:: bash
 
-    # docker run -it --rm --cpuset-cpus=0,1 stress --cpu 2
+    $ docker run -it --rm --cpuset-cpus=0,1 stress --cpu 2
 
 Por fim, para definir o uso de recursos de um contêiner, deve-se utilizar o parâmetro "--cpuset-quota":
 
 .. code-block:: bash
 
-    # docker run -it --rm --cpu-quota=50000 stress --cpu 4
+    $ docker run -it --rm --cpu-quota=50000 stress --cpu 4
     
 No caso acima, o contêiner estará limitado a utilizar até 50% do total de processamento do sistema; como nesse caso não houve a definição de afinidade o provável comportamento será o aparecimento de 4 processos, com ~13% de uso de cpu cada.
 
@@ -77,13 +77,13 @@ Para definir a quantidade de memória RAM que um determinado contêiner pode uti
 
 .. code-block:: bash
 
-    # docker run -d --memory=1G --name httpd httpd
-    # docker update --memory=512M httpd
+    $ docker run -d --memory=1G --name httpd httpd
+    $ docker update --memory=512M httpd
 
 É possível ainda definir o valor de swap que um contêiner pode usar, mas é necessário que seja em conjunto com o valor de memória RAM, conforme exempo abaixo:
 
-    # docker run -d --memory=1G --memory-swap=2G --name httpd httpd
-    # docker update --memory 1G --memory-swap 2G httpd
+    $ docker run -d --memory=1G --memory-swap=2G --name httpd httpd
+    $ docker update --memory 1G --memory-swap 2G httpd
 
 A **reserva de memória** (que funciona na prática como um **soft limit**) funciona de forma que, quando o ambiente estiver saturado, o docker tentará fazer com que contêiner alvo utilize o valor de memória definido. Vide o exemplo abaixo:
 
@@ -112,21 +112,21 @@ A gerenciamento de recursos de disco através do docker somente funcionará de f
 
 .. code-block:: bash
 
-    # cat /sys/block/sda/queue/scheduler
+    $ cat /sys/block/sda/queue/scheduler
     
 Caso o scheduler não esteja definodo como CQF, utilize o seguinte comando para realizar a mudança:
 
 .. code-block:: bash
 
-    # echo cfq > /sys/block/sda/queue/scheduler
+    $ echo cfq > /sys/block/sda/queue/scheduler
 
 
 Para a definição de uso de recurso através do peso relativo, deve-se levar em conta os valores de 100 (mínimo, maior restrição) a 1000 (máximo, sem restrições). Para visualizar os resultados do teste a seguir será necessário abrir dois terminais; o primeiro conterá um contêiner cujo parâmetro **--blkio-weight** será 100 e o segundo 600. Os comandos a serem inseridos em cada terminal são:
 
 .. code-block:: bash
 
-    # docker run -it --rm --blkio-weight 600 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
-    # docker run -it --rm --blkio-weight 100 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
+    $ docker run -it --rm --blkio-weight 600 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
+    $ docker run -it --rm --blkio-weight 100 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
     
 É possível ainda realizar a configuração do peso relativo para dispositivos específicos do sistema operacional. Esse tipo de controle é útil para os casos em que os arquivos do contêiner ficam em um determinado ponto de montagem enquanto que os volumes ficam outro. Exemplo:
 
@@ -151,15 +151,48 @@ A seguir, quando da utilização do gerenciamento via  **Escrita e Leitura em bp
 
 .. code-block:: bash
 
-    # docker run -it --rm --device-write-bps /dev/sda:10mb fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
-    # docker run -it --rm --device-read-bps /dev/sda:10mb fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
+    $ docker run -it --rm --device-write-bps /dev/sda:10mb fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
+    $ docker run -it --rm --device-read-bps /dev/sda:10mb fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
 
 Por fim, é possível também realizar o gerenciamento de recursos baseados em operações por segundo (leitura ou escrita):
 
 .. code-block:: bash
 
-    # docker run -it --rm --device-write-iops /dev/sda:20 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
+    $ docker run -it --rm --device-write-iops /dev/sda:20 fedora sh -c 'time dd if=/dev/zero of=test.out bs=1M count=512 oflag=direct'
 
+
+========================================
+Visualização de Recursos & Monitoramento
+========================================
+
+A visualização de uso de Recursos do docker pode ser realizado através do seguinte comando:
+
+.. code-block:: bash
+
+    $ docker stats
+    $ docker stats --no-stream
+    $ docker stats <CONTAINER>
+
+Atualmente, algumas soluções do mercado já provêem suporte a estatísticas de funcionamento do docker, mas o CAdvisor destaca-se por ser Aplicação criada pelo Google, simplista, que retorna as estatísticas de uso de recurso dos contêineres e do host.
+Para iniciar o Cadvisor em um Host com o docker utilize o seguinte comando:
+
+.. code-block:: bash
+
+    docker run \
+      --volume=/:/rootfs:ro \
+      --volume=/var/run:/var/run:rw \
+      --volume=/sys:/sys:ro \
+      --volume=/var/lib/docker/:/var/lib/docker:ro \
+      --publish=8080:8080 \
+      --detach=true \
+      --name=cadvisor \
+      google/cadvisor:latest
+
+Por outro lado, o monitoramento do contêiner pode ocorrer através : para o segundo caso, um recurso muito útil é de **HealthCheck**, onde o próprio contêiner passa a conter uma instrução de checagem, que é automaticamente executada em segundo plano e que, a depender do resultado, irá mudar a chave "{{ Status.Health }}" e até mesmo parar o contêiner.
+
+Um exemplo de instrução de checagem pode ser visto abaixo:
+
+``HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost/ || exit 1``
 
 =========
 Segurança
@@ -185,7 +218,7 @@ Capabilities são adicionadas ou removidas de um contêiner no momento de sua cr
 
 .. code-block:: bash
 
-    # docker run --cap-drop=NET_RAW --rm fedora bash
+    $ docker run --cap-drop=NET_RAW --rm fedora bash
 
 No exemplo acima, mesmo como root, não é possível utilizar o comando 'ping', pois o contêiner não possui a capability CAP_NET_RAW.
 
@@ -193,75 +226,3 @@ No exemplo acima, mesmo como root, não é possível utilizar o comando 'ping', 
 
     Uma lista completa de *capabilities* pode ser vista em ``man capabilities``.
 
-
-https://docs.docker.com/engine/security/seccomp/
-
-Docker: Plugins de Autorização
-==============================
-
-Para fins de autorização, o docker suporta\* três métodos:
-
- #. Permissões do Socket Docker;
- #. Permissões de um proxy reverso que faça o *forwarding* da chamada de API para o endpoint tcp do docker;
- #. Suporte a plugins de autorização.
-
-Por padrão, somente o usuário root possui acesso ao socket do docker, que fica disponível em ``/var/run/docker.sock``. Isso acontece pelo fato de que, a partir do momento que um usuário possui acesso ao socket ele pode instrospectar
-informações acerca dos contêineres e até mesmo gerenciá-los ... criando, exemplo, contêineres com acesso privilegiado no ambiente do host. Por esse motivo, recomenda-se que o acesso ao arquivo de socket seja controlado afim de prover
-um nível mínimo de auditabilidade do ambiente.
-
-Da mesma forma, é possível fazer com que o docker passe a aceitar requisições através de TCP em sua API Rest; nesse caso, o docker **não** provê nenhuma forma de controle; em verdade, a partir do momento em que há conectividade para o endpoint do Docker, basta
-enviar as requisições HTTP's para realizar o gerenciamento do mesmo. Usualmente nesses casos, utiliza-se um proxy reverso antes da API Do docker (que nesse caso só é acessível através do endereço de localhost), que possui algum método de autenticação/autorização configurado
-e que, uma vez satisfeito pelo usuário, dá acesso ao gerenciamento do Docker como um todo.
-
-Por padrão, o Docker não vem configurado para permitir o acesso via TCP, sendo necessário adicionar o seguinte parâmetro a configuração do serviço:
-
-``
-    ExecStart= [...] -H 127.0.0.1:2375
-``
-
-.. note::
-
-    A API do Docker pode ser configurada para operar via TLS/HTTPS para melhoria da segurança; mais informações disponíveis em: https://docs.docker.com/engine/security/https/
-
-Por fim, é possível realizar a criação de um **plugin** proverá a parte de autenticação e autorização, que funcionará da seguinte forma:
-
-.. image:: ../data/authz_allow.png
-
-.. image:: ../data/authz_deny.png
-
-.. note::
-
-    Informações de criação de plugins de autorização e autenticação estão disponíveis em: https://docs.docker.com/engine/extend/plugins_authorization/
-
-========================================
-Visualização de Recursos & Monitoramento
-========================================
-
-A visualização de uso de Recursos do docker pode ser realizado através do seguinte comando:
-
-.. code-block:: bash
-
-    # docker stats
-    # docker stats --no-stream
-    # docker stats <CONTAINER>
-
-Atualmente, algumas soluções do mercado já provêem suporte a estatísticas de funcionamento do docker, mas o CAdvisor destaca-se por ser Aplicação criada pelo Google, simplista, que retorna as estatísticas de uso de recurso dos contêineres e do host.
-Para iniciar o Cadvisor em um Host com o docker utilize o seguinte comando:
-
-.. code-block:: bash
-
-    docker run \
-      --volume=/:/rootfs:ro \
-      --volume=/var/run:/var/run:rw \
-      --volume=/sys:/sys:ro \
-      --volume=/var/lib/docker/:/var/lib/docker:ro \
-      --publish=8080:8080 \
-      --detach=true \
-      --name=cadvisor \
-      google/cadvisor:latest
-
-Por outro lado, o monitoramento do contêiner pode ocorrer através do uso de Recursos e do Status do Contêiner: para o segundo caso, um recurso muito útil é de **HealthCheck**, onde o próprio contêiner passa a conter uma instrução de checagem, que é automaticamente executada em segundo plano e que, a depender do resultado, irá mudar a chave "{{ Status.Health }}" e até mesmo parar o contêiner.
-
-Um exemplo de instrução de checagem pode ser visto abaixo:
-
-``HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost/ || exit 1``

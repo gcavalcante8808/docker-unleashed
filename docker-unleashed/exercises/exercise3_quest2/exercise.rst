@@ -2,9 +2,9 @@
 
 .. toctree::
 
-***************************************************
-Uso e Comunicação entre contêineres em redes docker
-***************************************************
+************************************************************************
+Cap. 3 - Exercício2: Uso e Comunicação entre contêineres em redes docker
+************************************************************************
 
 Para aplicar os conhecimentos explanados nesta aula, será necessário atualizar a aplicação afim de que a mesma passe a utilizar um cache Redis. Para tanto, as ações abaixo balizam as mudanças necessárias:
 
@@ -36,7 +36,7 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário atualizar
 .. literalinclude:: app/docker-compose.yml
 
 4. Inicialize os novos contêineres através do comando ``docker-compose up -d``;
-5. Verifique os logs da aplicação quanto ao funcionamento com o Redis, através do comando ``docker-compose logs app``.
+5. Verifique se a chave 'Start Time' foi criada no redis através do comando ``docker-compose exec redis redis-cli keys '*'``.
 
 Informações e/ou questões adicionais
 ####################################

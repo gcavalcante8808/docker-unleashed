@@ -3,9 +3,9 @@
 .. toctree::
 
 
-********************
-Cenário e Atividades
-********************
+*******************************************************************
+Cap. 1 - Exercício1: Encapsulamento da Aplicação como Microsserviço
+*******************************************************************
 
 Para aplicar os demais conhecimentos nas demais aulas, será necessário criar uma imagem da aplicação 'curso', cujos detalhes são os seguintes:
 
