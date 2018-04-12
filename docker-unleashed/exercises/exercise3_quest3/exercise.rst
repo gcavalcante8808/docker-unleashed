@@ -10,7 +10,7 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário implement
 
 1. Remover o contêiner do fluentd previamente criado através do comando ``docker-compose down``;
 2. Como root, rodar o comando ``sysctl -w vm.max_map_count=262144`` necessário para funcionamento do ElasticSearch;
-3. Criar uma nova pasta chamada "logs" e insira o seguinte conteúdo para o arquivo docker-compose.yml:
+3. Criar uma nova pasta chamada "logs" e inserir o seguinte conteúdo para o arquivo docker-compose.yml:
 
 .. literalinclude::  app/docker-compose.yml
 

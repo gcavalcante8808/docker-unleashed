@@ -1,0 +1,22 @@
+version: '2.2'
+volumes:
+  beats-data:
+
+services:
+  monit:
+    image: docker.elastic.co/beats/metricbeat:6.1.2
+    #    command: -system.hostfs=/hostfs
+    volumes:
+     - beats-data:/usr/share/metricbeat
+     - /var/run/docker.sock:/var/run/docker.sock
+     - ./metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
+     - /proc:/hostfs/proc:ro
+     - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+     - /:/hostfs:ro
+
+#    networks:
+#     - logs_default
+
+#networks:
+#  logs_default:
+#    external: true

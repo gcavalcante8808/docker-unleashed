@@ -14,6 +14,5 @@ Contents:
    exercises/exercise3_quest1/exercise.rst
    exercises/exercise3_quest2/exercise.rst
    exercises/exercise3_quest3/exercise.rst
-   exercises/exercise4_quest1/exercise.rst
    exercises/exercise4_quest2/exercise.rst
 
