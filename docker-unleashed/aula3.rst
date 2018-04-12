@@ -68,7 +68,7 @@ Com os certificados já criados no volume, resta apenas inicializar a nova vers�
     Para o ambiente de produção, solicite os certificados junto a área de infraestrutura.
     
 
-Por fim, é desejável fazer a restrição de acesso ao registry através da utilização de credenciais no estilo htpasswd/*basic auth*. Para tanto, atualize o docker-compose.yml relativo ao registry para que fique com o seguinte conteúdo:
+Por fim, é desejável fazer a restrição de acesso ao registry através da utilização de credenciais no estilo htpasswd/*basic auth*. Para tanto, atualize o docker-compose.yml relativo ao registry para que fique com a seguinte conteúdo:
 
 .. literalinclude:: ../data/docker-compose.registry.3.yml
 
@@ -273,11 +273,11 @@ FluentD
 
 O fluentD é um coletor de dados capaz de receber dados de diferentes níveis de infraestrutura e repassá-los a soluções específicas como o Apache Lucene/Elastic Search.
 
-Para iniciar um novo contêiner com o fluentD, crie uma pasta com o seguinte declaração do arquivo docker-compose.yml:
+Para iniciar um novo contêiner com o fluentD, crie uma pasta com a seguinte declaração do arquivo docker-compose.yml:
 
 .. literalinclude:: ../data/docker-compose.fluentd.yml
 
-A seguir, crie o arquivo de configuração básico do fluentd no mesmo diretório em que o arquivo docker-compose.yml se encontra com o seguinte conteúdo:
+A seguir, crie o arquivo "stdout.conf" no mesmo diretório em que o arquivo docker-compose.yml se encontra, com o seguinte conteúdo:
 
 .. literalinclude:: ../data/fluentd.stdout.conf
 
@@ -287,7 +287,7 @@ Uma vez que o fluentd já está disponível, crie um novo contêiner através do
 
 .. code-block:: bash
 
-    $ docker run -d --name web-fluentd -p 8080:80 --log-driver=fluentd --log-opt fluentd-address=localhost:24224 nginx:alpine
+    $ docker run -d --name web-fluentd -p 8080:80 --log-driver=fluentd --log-opt fluentd-address=localhost:24224 --log-opt tag="docker-web.{{.ImageName}}/{{.Name}}/{{.ID}}" nginx:alpine
 
 Após a criação do contêiner, realize algumas requisições http para o endereço 'http://localhost:8080' para que logs sejam gerados e, por fim, visualize a recepção destes através dos logs do próprio fluentd:
 
