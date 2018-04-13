@@ -1,0 +1,56 @@
+version: '3.4'
+
+volumes:
+  dbdata:
+  registry_data:
+
+services:
+  db:
+    image: postgres:9.6
+    restart: unless-stopped
+    volumes:
+     - dbdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: clair
+      POSTGRES_USER: clair
+      POSTGRES_PASSWORD: clair
+
+  clair:
+    image: clair-local:v2.0.2
+    build: clair/
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_USER: clair
+      DB_PASSWORD: clair
+      DB_NAME: clair
+      DB_PORT: 5432
+    tmpfs:
+     - /tmp
+    depends_on:
+     - db
+
+  # Klar Project:https://github.com/optiopay/klar
+  klar:
+    image: klar-local:v2.0.2
+    build: klar/
+    tty: true
+    entrypoint: sh
+    environment:
+      CLAIR_ADDR: clair
+      CLAIR_THRESHOLD: 10
+      CLAIR_OUTPUT: Negligible
+      CLAIR_THRESHOLD: 10
+#      DOCKER_USER=docker
+#      DOCKER_PASSWORD=secret
+      DOCKER_INSECURE: "true"
+      REGISTRY_INSECURE: "true"
+
+  registry:
+    image: registry:2
+    restart: unless-stopped
+    ports:
+     - 5000:5000
+    volumes:
+     - registry_data:/var/lib/registry
+

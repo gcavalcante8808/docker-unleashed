@@ -1,0 +1,9 @@
+version: '2.2'
+
+services:
+  app:
+    image: rustweb
+    build: .
+    ports:
+     - 3000:3000
+

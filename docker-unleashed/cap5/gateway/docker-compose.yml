@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+  app:
+    image: traefik:1.5
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+     - 80:80
+     - 8080:8080
+
+    command: --logLevel=DEBUG \
+             --docker \
+             --docker.swarmmode
+             --docker.domain=cluster.local
+             --docker.watch
+             --web
+

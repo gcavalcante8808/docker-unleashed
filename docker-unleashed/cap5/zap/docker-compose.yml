@@ -1,0 +1,16 @@
+version: '2'
+services:
+    app:
+      image: owasp/zap2docker-stable
+      restart: unless-stopped
+      command: zap-webswing.sh 
+      labels:
+       - "traefik.frontend.rule=Host:zap.cluster.local;PathPrefix=/"
+       - "traefik.port=8080"
+       - "traefik.docker.network=gateway_default"
+      networks:
+       - gateway_default
+
+networks:
+  gateway_default:
+    external: true

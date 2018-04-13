@@ -1,0 +1,7 @@
+[package]
+name = "rustweb"
+version = "0.1.0"
+authors = ["gcavalcante8808 <gabriel.cavalcante88@gmail.com>"]
+
+[dependencies]
+iron=""
