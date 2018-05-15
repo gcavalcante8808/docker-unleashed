@@ -31,9 +31,9 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário atualizar
 
 3. Crie um contêiner com o nome **aula-2** a partir da imagem com um vínculo da porta 5000 do host para a porta 5000 do contêiner para facilitar a visualização através do um browser, através do comando ``docker run -d --name aula-2 -p 5000:5000 oficina-docker:aula2-volumes``;
 
-4. Acesse a aplicação a partir de um browser no endereço ``http://localhost:5000`` e realize algumas requisições para que estas possam ser inseridas pela aplicação em no arquivo 'foo.log' dentro do contêiner;
+4. Acesse a aplicação a partir de um browser no endereço ``http://localhost:5000`` e realize algumas requisições para que estas possam ser inseridas pela aplicação no arquivo 'foo.log' dentro do contêiner;
 
-5. Visualize o conteúdo do arquivo através do comando ``docker exec -it aula-2 cat /usr/src/foo.log``;
+5. Visualize o conteúdo do arquivo através do comando ``docker exec -it aula-2 cat /tmp/foo.log``;
 
 6. Remova o contêiner através do comando ``docker rm -f aula-2``;
 
