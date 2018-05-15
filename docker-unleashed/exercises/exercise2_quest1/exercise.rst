@@ -18,7 +18,7 @@ Para aplicar os conhecimentos explanados nesta aula, será necessário atualizar
 
     app = Flask(__name__)
 
-    handler = RotatingFileHandler('foo.log', maxBytes=10000, backupCount=1)
+    handler = RotatingFileHandler('/tmp/foo.log', maxBytes=10000, backupCount=1)
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
 
