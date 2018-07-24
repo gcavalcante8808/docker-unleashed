@@ -16,7 +16,7 @@ O material foi escrito utilizando-se o framework [Sphinx](http://www.sphinx-doc.
 
 A última versão do material é gerada e automaticamente disponiilizada em:
 
-http://docker-unleashed.readthedocs.io/intro.html
+http://docker-unleashed.readthedocs.io/
 
 Construção do Material
 ----------------------
